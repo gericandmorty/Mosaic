@@ -9,7 +9,7 @@ import { musicService, Track } from '../services/music.service';
 import { ChevronDown, Play, Pause, SkipForward, SkipBack, Heart, Share2, Repeat, Shuffle } from 'lucide-react-native';
 
 import { useMusicStore } from '../store/music.slice';
-import { libraryService } from '../../library/services/library.service';
+import { likedService } from '../../liked/services/liked.service';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,7 +40,7 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
     const checkLiked = async () => {
       if (displayTrack?.id) {
         try {
-          const liked = await libraryService.checkIsLiked(displayTrack.id);
+          const liked = await likedService.checkIsLiked(displayTrack.id);
           setIsLiked(liked);
         } catch (e) {
           console.error(e);
@@ -53,7 +53,7 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
   const handleToggleLike = async () => {
     if (!displayTrack) return;
     try {
-      await libraryService.toggleLikedSong(displayTrack);
+      await likedService.toggleLikedSong(displayTrack);
       setIsLiked(!isLiked);
     } catch (e) {
       console.error(e);

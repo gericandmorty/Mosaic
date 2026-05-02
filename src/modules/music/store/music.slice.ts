@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Audio } from 'expo-av';
 import { Track, musicService } from '../services/music.service';
 import { historyService } from '../../history/services/history.service';
+import { offlineService } from '../../offline/services/offline.service';
 
 const parseDurationToMillis = (duration: string | undefined) => {
   if (!duration) return 0;
@@ -70,7 +71,14 @@ export const useMusicStore = create<MusicState>((set, get) => {
     }
 
     try {
-      const streamUrl = await musicService.getStreamUrl(track.id);
+      // Check if we have this downloaded offline
+      const localUri = await offlineService.isDownloaded(track.id);
+      let streamUrl = localUri;
+      
+      // If not offline, fetch stream from backend
+      if (!streamUrl) {
+        streamUrl = await musicService.getStreamUrl(track.id);
+      }
       
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,

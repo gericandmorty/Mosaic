@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
@@ -11,8 +11,9 @@ import { MiniPlayer } from '../../../shared/components/MiniPlayer';
 import { Search, Bell, Play, Plus, Menu as MenuIcon, X } from 'lucide-react-native';
 import { musicService, Track } from '../../music/services/music.service';
 import { TextInput, ActivityIndicator } from 'react-native';
-import { libraryService, Playlist } from '../../library/services/library.service';
 import { historyService } from '../../history/services/history.service';
+import { likedService } from '../../liked/services/liked.service';
+import { playlistsService, Playlist } from '../../playlists/services/playlists.service';
 
 const MusicIcon = ({ size, color }: any) => (
   <View style={{ width: size, height: size, borderRadius: size/2, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
@@ -64,23 +65,32 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [fetchedHistory, fetchedLiked, fetchedPlaylists] = await Promise.all([
+        historyService.getRecentHistory(4),
+        likedService.getLikedSongs(),
+        playlistsService.getPlaylists()
+      ]);
+      setHistorySongs(fetchedHistory);
+      setLikedSongs(fetchedLiked);
+      setPlaylists(fetchedPlaylists);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data', error);
+    } finally {
+      setIsLoadingData(false);
+      setRefreshing(false);
+    }
+  };
+
   React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [fetchedHistory, fetchedLiked, fetchedPlaylists] = await Promise.all([
-          historyService.getRecentHistory(4),
-          libraryService.getLikedSongs(),
-          libraryService.getPlaylists()
-        ]);
-        setHistorySongs(fetchedHistory);
-        setLikedSongs(fetchedLiked);
-        setPlaylists(fetchedPlaylists);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data', error);
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
+    fetchData();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
     fetchData();
   }, []);
 
@@ -136,7 +146,18 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor={themeColors.pencil}
+              colors={[themeColors.pencil]}
+            />
+          }
+        >
           <PaperText style={[styles.greeting, { color: themeColors.ink }]}>Good morning, {user?.displayName?.split(' ')[0] || 'Creator'}</PaperText>
           
           {/* Playlists Section */}
@@ -151,7 +172,7 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             ) : playlists.length > 0 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 15, paddingHorizontal: 5 }}>
                 {playlists.map((playlist, index) => (
-                  <View key={playlist.id} style={{ width: 160 }}>
+                  <View key={playlist.id} style={{ width: 110 }}>
                     <DashboardCard 
                       title={playlist.name} 
                       subtitle="Custom Playlist" 
@@ -380,10 +401,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dashCard: {
-    width: '46%',
-    padding: 12,
+    width: '31%',
+    padding: 8,
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 0.1,
@@ -392,8 +413,8 @@ const styles = StyleSheet.create({
   },
   dashCardImagePlaceholder: {
     aspectRatio: 1,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 6,
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -403,12 +424,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dashCardTitle: {
-    fontSize: 16,
-    marginBottom: 2,
+    fontSize: 13,
+    marginBottom: 0,
     fontFamily: 'PatrickHand_400Regular',
   },
   dashCardSubtitle: {
-    fontSize: 12,
+    fontSize: 10,
   },
   horizontalScroll: {
   },

@@ -6,7 +6,8 @@ import { PaperText } from '../../../shared/components/PaperText';
 import { MiniPlayer } from '../../../shared/components/MiniPlayer';
 import { useMusicStore } from '../store/music.slice';
 import { musicService, Track } from '../services/music.service';
-import { libraryService, Playlist } from '../../library/services/library.service';
+import { playlistsService, Playlist } from '../../playlists/services/playlists.service';
+import { likedService } from '../../liked/services/liked.service';
 import { ChevronLeft, Search, Play, Clock, User, MoreVertical, Plus, ListMusic, Heart } from 'lucide-react-native';
 
 export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
@@ -29,7 +30,7 @@ export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
     if (!searchQuery.trim()) return;
     setLoading(true);
     try {
-      const results = await musicService.search(searchQuery);
+      const results = await musicService.search(searchQuery, 5);
       setTracks(results);
     } catch (error) {
       console.error('Search error:', error);
@@ -49,7 +50,7 @@ export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
     setMenuTrack(track);
     setShowPlaylists(false);
     try {
-      const data = await libraryService.getPlaylists();
+      const data = await playlistsService.getPlaylists();
       setPlaylists(data);
     } catch (e) {
       console.error(e);
@@ -67,7 +68,7 @@ export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
   const handleAddToLikes = async () => {
     if (menuTrack) {
       try {
-        await libraryService.toggleLikedSong(menuTrack);
+        await likedService.toggleLikedSong(menuTrack);
         Alert.alert('Saved to Liked Songs');
       } catch (e) {
         console.error(e);
@@ -79,7 +80,7 @@ export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
   const handleAddToPlaylist = async (playlistId: string) => {
     if (menuTrack) {
       try {
-        await libraryService.addTrackToPlaylist(playlistId, menuTrack);
+        await playlistsService.addTrackToPlaylist(playlistId, menuTrack);
         Alert.alert('Added to Playlist');
       } catch (e) {
         console.error(e);

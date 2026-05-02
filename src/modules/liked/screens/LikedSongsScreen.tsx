@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, ChevronLeft, Play, X } from 'lucide-react-native';
 import { PaperText } from '../../../shared/components/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { libraryService } from '../../library/services/library.service';
+import { likedService } from '../services/liked.service';
 import { Track } from '../../music/services/music.service';
 import { useMusicStore } from '../../music/store/music.slice';
 import { MiniPlayer } from '../../../shared/components/MiniPlayer';
@@ -22,7 +22,7 @@ export const LikedSongsScreen: React.FC<any> = ({ navigation }) => {
   const fetchLikedSongs = async () => {
     try {
       setLoading(true);
-      const data = await libraryService.getLikedSongs();
+      const data = await likedService.getLikedSongs();
       setSongs(data);
     } catch (error) {
       console.error('Failed to load liked songs:', error);
@@ -38,7 +38,7 @@ export const LikedSongsScreen: React.FC<any> = ({ navigation }) => {
 
   const handleUnlike = async (track: Track) => {
     try {
-      await libraryService.toggleLikedSong(track);
+      await likedService.toggleLikedSong(track);
       setSongs(songs.filter(s => s.id !== track.id));
     } catch (error) {
       console.error('Failed to unlike song:', error);

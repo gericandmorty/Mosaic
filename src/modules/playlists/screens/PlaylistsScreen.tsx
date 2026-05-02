@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListMusic, ChevronLeft, Plus, Trash2 } from 'lucide-react-native';
 import { PaperText } from '../../../shared/components/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { libraryService, Playlist } from '../../library/services/library.service';
+import { playlistsService, Playlist } from '../services/playlists.service';
 import { MiniPlayer } from '../../../shared/components/MiniPlayer';
 
 export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
@@ -19,7 +19,7 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
   const fetchPlaylists = async () => {
     try {
       setLoading(true);
-      const data = await libraryService.getPlaylists();
+      const data = await playlistsService.getPlaylists();
       setPlaylists(data);
     } catch (error) {
       console.error('Failed to load playlists:', error);
@@ -39,7 +39,7 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
           onPress: async (name?: string) => {
             if (name) {
               try {
-                const newPlaylist = await libraryService.createPlaylist(name);
+                const newPlaylist = await playlistsService.createPlaylist(name);
                 setPlaylists([newPlaylist, ...playlists]);
               } catch (error) {
                 console.error('Failed to create playlist:', error);
@@ -60,7 +60,7 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await libraryService.deletePlaylist(id);
+            await playlistsService.deletePlaylist(id);
             setPlaylists(playlists.filter(p => p.id !== id));
           } catch (error) {
             console.error('Failed to delete playlist:', error);

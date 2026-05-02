@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Play, X, ListMusic, Shuffle } from 'lucide-react-native';
 import { PaperText } from '../../../shared/components/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { libraryService, Playlist, PlaylistTrack } from '../../library/services/library.service';
+import { playlistsService, Playlist, PlaylistTrack } from '../services/playlists.service';
 import { useMusicStore } from '../../music/store/music.slice';
 import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { offlineService } from '../../offline/services/offline.service';
+import { Download, CheckCircle } from 'lucide-react-native';
 
 export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const { playlist } = route.params as { playlist: Playlist };
   const colors = useThemeColors();
   const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [currentDownloadTitle, setCurrentDownloadTitle] = useState('');
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
   const playQueue = useMusicStore(state => state.playQueue);
 
   useEffect(() => {
@@ -22,8 +28,13 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
   const fetchTracks = async () => {
     try {
       setLoading(true);
-      const data = await libraryService.getPlaylistTracks(playlist.id);
+      const data = await playlistsService.getPlaylistTracks(playlist.id);
       setTracks(data);
+      
+      // Check which ones are downloaded
+      const downloaded = await offlineService.getDownloadedTracks();
+      const ids = new Set(downloaded.map(t => t.id));
+      setDownloadedIds(ids);
     } catch (error) {
       console.error('Failed to load playlist tracks:', error);
     } finally {
@@ -52,11 +63,54 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
 
   const handleRemoveTrack = async (youtubeId: string) => {
     try {
-      await libraryService.removeTrackFromPlaylist(playlist.id, youtubeId);
+      await playlistsService.removeTrackFromPlaylist(playlist.id, youtubeId);
       setTracks(tracks.filter(t => t.youtubeId !== youtubeId));
     } catch (error) {
       console.error('Failed to remove track:', error);
     }
+  };
+
+  const handleDownloadPlaylist = async () => {
+    if (tracks.length === 0) return;
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    let downloadedCount = 0;
+
+    // Sequential downloading is more stable for progress updates
+    for (const track of tracks) {
+      if (downloadedIds.has(track.youtubeId)) {
+        downloadedCount++;
+        setDownloadProgress(Math.round((downloadedCount / tracks.length) * 100));
+        continue;
+      }
+
+      setCurrentDownloadTitle(track.title);
+      try {
+        const success = await offlineService.downloadTrack({
+          id: track.youtubeId,
+          title: track.title,
+          artist: track.artist,
+          thumbnailUrl: track.thumbnailUrl,
+          duration: track.duration,
+          url: ''
+        });
+        
+        if (success) {
+          setDownloadedIds(prev => new Set([...prev, track.youtubeId]));
+        }
+      } catch (e) {
+        console.error('Download error for track:', track.title, e);
+      } finally {
+        downloadedCount++;
+        setDownloadProgress(Math.round((downloadedCount / tracks.length) * 100));
+      }
+    }
+
+    setTimeout(() => {
+      setIsDownloading(false);
+      setCurrentDownloadTitle('');
+      Alert.alert('Download Complete', 'Your playlist is now available offline!');
+    }, 500);
   };
 
   const renderItem = ({ item, index }: { item: PlaylistTrack; index: number }) => (
@@ -66,7 +120,10 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
     >
       <Image source={{ uri: item.thumbnailUrl }} style={styles.thumbnail} />
       <View style={styles.trackInfo}>
-        <PaperText numberOfLines={1} style={[styles.trackTitle, { color: colors.ink }]}>{item.title}</PaperText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <PaperText numberOfLines={1} style={[styles.trackTitle, { color: colors.ink, flex: 1 }]}>{item.title}</PaperText>
+          {downloadedIds.has(item.youtubeId) && <CheckCircle size={14} color={colors.pencil} />}
+        </View>
         <PaperText numberOfLines={1} style={[styles.trackArtist, { color: colors.pencilLight }]}>{item.artist}</PaperText>
       </View>
       <TouchableOpacity onPress={() => handleRemoveTrack(item.youtubeId)} style={styles.removeBtn}>
@@ -85,8 +142,28 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
           <PaperText numberOfLines={1} style={[styles.headerTitle, { color: colors.ink }]}>{playlist.name}</PaperText>
           <PaperText style={[styles.headerSubtitle, { color: colors.pencilLight }]}>{tracks.length} Tracks</PaperText>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={handleShufflePlay} style={[styles.playBtn, { backgroundColor: colors.pencil, marginRight: 10 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <TouchableOpacity 
+            onPress={handleDownloadPlaylist} 
+            disabled={isDownloading}
+            style={[
+              styles.playBtn, 
+              { backgroundColor: colors.pencil },
+              isDownloading && { backgroundColor: 'transparent', borderColor: colors.pencil, borderWidth: 2, borderStyle: 'dashed', width: 'auto', paddingHorizontal: 15 }
+            ]}
+          >
+            {isDownloading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <PaperText numberOfLines={1} style={{ fontSize: 11, color: colors.pencil, fontFamily: 'PatrickHand_400Regular', maxWidth: 100 }}>
+                  {currentDownloadTitle}...
+                </PaperText>
+                <PaperText style={{ fontSize: 11, color: colors.pencil, fontWeight: 'bold' }}>{downloadProgress}%</PaperText>
+              </View>
+            ) : (
+              <Download size={20} color={colors.paper} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleShufflePlay} style={[styles.playBtn, { backgroundColor: colors.pencil }]}>
             <Shuffle size={20} color={colors.paper} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handlePlayAll} style={[styles.playBtn, { backgroundColor: colors.pencil }]}>

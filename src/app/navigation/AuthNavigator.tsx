@@ -9,6 +9,7 @@ import { PlayerScreen } from '../../modules/music/screens/PlayerScreen';
 import { LikedSongsScreen } from '../../modules/liked/screens/LikedSongsScreen';
 import { PlaylistsScreen } from '../../modules/playlists/screens/PlaylistsScreen';
 import { PlaylistDetailScreen } from '../../modules/playlists/screens/PlaylistDetailScreen';
+import { DownloadsScreen } from '../../modules/offline/screens/DownloadsScreen';
 
 import { useAuthStore } from '../../modules/auth/store/auth.slice';
 
@@ -17,6 +18,19 @@ const Stack = createNativeStackNavigator();
 const AuthNavigator = () => {
   const { token } = useAuthStore();
   const isAuthenticated = !!token;
+  
+  // Wait for hydration to complete to avoid flashing login screen
+  const [isHydrated, setIsHydrated] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkHydration = async () => {
+      // Small timeout to ensure Zustand has finished rehydrating from storage
+      setTimeout(() => setIsHydrated(true), 100);
+    };
+    checkHydration();
+  }, []);
+
+  if (!isHydrated) return null; // Or a loading splash
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -34,6 +48,7 @@ const AuthNavigator = () => {
           <Stack.Screen name="Likes" component={LikedSongsScreen} />
           <Stack.Screen name="Playlists" component={PlaylistsScreen} />
           <Stack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
+          <Stack.Screen name="Downloads" component={DownloadsScreen} />
         </>
       )}
     </Stack.Navigator>
