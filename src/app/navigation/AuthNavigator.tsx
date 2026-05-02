@@ -6,6 +6,9 @@ import { DashboardScreen } from '../../modules/dashboard/screens/DashboardScreen
 import { ProfileScreen } from '../../modules/profile/screens/ProfileScreen';
 import { SearchScreen } from '../../modules/music/screens/SearchScreen';
 import { PlayerScreen } from '../../modules/music/screens/PlayerScreen';
+import { LikedSongsScreen } from '../../modules/liked/screens/LikedSongsScreen';
+import { PlaylistsScreen } from '../../modules/playlists/screens/PlaylistsScreen';
+import { PlaylistDetailScreen } from '../../modules/playlists/screens/PlaylistDetailScreen';
 
 import { useAuthStore } from '../../modules/auth/store/auth.slice';
 
@@ -28,6 +31,9 @@ const AuthNavigator = () => {
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
           <Stack.Screen name="Player" component={PlayerScreen} />
+          <Stack.Screen name="Likes" component={LikedSongsScreen} />
+          <Stack.Screen name="Playlists" component={PlaylistsScreen} />
+          <Stack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
         </>
       )}
     </Stack.Navigator>

@@ -1,77 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { PaperText } from '../../../shared/components/PaperText';
 import { musicService, Track } from '../services/music.service';
 import { ChevronDown, Play, Pause, SkipForward, SkipBack, Heart, Share2, Repeat, Shuffle } from 'lucide-react-native';
 
+import { useMusicStore } from '../store/music.slice';
+import { libraryService } from '../../library/services/library.service';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
   const { track } = route.params as { track: Track };
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
   const colors = useThemeColors();
 
+  const { 
+    currentTrack, 
+    isPlaying, 
+    isLoading, 
+    positionMillis, 
+    durationMillis, 
+    isLooping,
+    playNext, 
+    playPrevious, 
+    togglePlayPause, 
+    seekTo, 
+    toggleLoop 
+  } = useMusicStore();
+
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Use currentTrack if it exists (in case global state updated), otherwise fallback to the track passed in params for initial render
+  const displayTrack = currentTrack || track;
+
   useEffect(() => {
-    loadAudio();
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
+    const checkLiked = async () => {
+      if (displayTrack?.id) {
+        try {
+          const liked = await libraryService.checkIsLiked(displayTrack.id);
+          setIsLiked(liked);
+        } catch (e) {
+          console.error(e);
+        }
       }
     };
-  }, []);
+    checkLiked();
+  }, [displayTrack?.id]);
 
-  const loadAudio = async () => {
-    setLoading(true);
+  const handleToggleLike = async () => {
+    if (!displayTrack) return;
     try {
-      const streamUrl = await musicService.getStreamUrl(track.id);
-      
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-      });
-
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: streamUrl },
-        { shouldPlay: true },
-        onPlaybackStatusUpdate
-      );
-      
-      setSound(newSound);
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error loading audio:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setPosition(status.positionMillis);
-      setDuration(status.durationMillis || 0);
-      setIsPlaying(status.isPlaying);
-      
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        setPosition(0);
-      }
-    }
-  };
-
-  const handlePlayPause = async () => {
-    if (!sound) return;
-    
-    if (isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.playAsync();
+      await libraryService.toggleLikedSong(displayTrack);
+      setIsLiked(!isLiked);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -82,8 +67,6 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  const progress = duration > 0 ? position / duration : 0;
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
@@ -92,7 +75,7 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
         </TouchableOpacity>
         <View style={styles.headerTitle}>
           <PaperText style={[styles.nowPlaying, { color: colors.pencilLight }]}>NOW SKETCHING</PaperText>
-          <PaperText numberOfLines={1} style={[styles.albumName, { color: colors.ink }]}>{track.title}</PaperText>
+          <PaperText numberOfLines={1} style={[styles.albumName, { color: colors.ink }]}>{displayTrack.title}</PaperText>
         </View>
         <TouchableOpacity>
           <Share2 size={24} color={colors.ink} />
@@ -102,8 +85,8 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
       <View style={styles.content}>
         {/* Album Art */}
         <View style={[styles.artContainer, { borderColor: colors.pencil, backgroundColor: colors.paper }]}>
-          <Image source={{ uri: track.thumbnailUrl }} style={styles.art} />
-          {loading && (
+          <Image source={{ uri: displayTrack.thumbnailUrl }} style={styles.art} />
+          {isLoading && (
             <View style={styles.artLoading}>
               <ActivityIndicator size="large" color={colors.pencil} />
             </View>
@@ -114,23 +97,31 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
         <View style={styles.infoSection}>
           <View style={styles.titleRow}>
             <View style={{ flex: 1 }}>
-              <PaperText style={[styles.trackTitle, { color: colors.ink }]}>{track.title}</PaperText>
-              <PaperText style={[styles.trackArtist, { color: colors.pencilLight }]}>{track.artist}</PaperText>
+              <PaperText style={[styles.trackTitle, { color: colors.ink }]} numberOfLines={1}>{displayTrack.title}</PaperText>
+              <PaperText style={[styles.trackArtist, { color: colors.pencilLight }]} numberOfLines={1}>{displayTrack.artist}</PaperText>
             </View>
-            <TouchableOpacity>
-              <Heart size={28} color={colors.pencilLight} />
+            <TouchableOpacity onPress={handleToggleLike}>
+              <Heart size={28} color={isLiked ? colors.pencil : colors.pencilLight} fill={isLiked ? colors.pencil : 'transparent'} />
             </TouchableOpacity>
           </View>
 
           {/* Progress Bar */}
           <View style={styles.progressSection}>
-            <View style={[styles.progressBarBg, { backgroundColor: colors.pencil + '20' }]}>
-              <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: colors.pencil }]} />
-              <View style={[styles.progressKnob, { left: `${progress * 100}%`, backgroundColor: colors.pencil, borderColor: colors.paper }]} />
-            </View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={0}
+              maximumValue={durationMillis > 0 ? durationMillis : 1}
+              value={positionMillis}
+              minimumTrackTintColor={colors.pencil}
+              maximumTrackTintColor={colors.pencil + '40'}
+              thumbTintColor={colors.pencil}
+              onSlidingComplete={async (value) => {
+                await seekTo(value);
+              }}
+            />
             <View style={styles.timeRow}>
-              <PaperText style={[styles.timeText, { color: colors.pencilLight }]}>{formatTime(position)}</PaperText>
-              <PaperText style={[styles.timeText, { color: colors.pencilLight }]}>{formatTime(duration)}</PaperText>
+              <PaperText style={[styles.timeText, { color: colors.pencilLight }]}>{formatTime(positionMillis)}</PaperText>
+              <PaperText style={[styles.timeText, { color: colors.pencilLight }]}>{formatTime(durationMillis)}</PaperText>
             </View>
           </View>
 
@@ -141,16 +132,16 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
             </TouchableOpacity>
             
             <View style={styles.mainControls}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={playPrevious}>
                 <SkipBack size={36} color={colors.ink} fill={colors.ink} />
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={[styles.playBtn, { backgroundColor: colors.pencil }]} 
-                onPress={handlePlayPause}
-                disabled={loading}
+                onPress={togglePlayPause}
+                disabled={isLoading}
               >
-                {loading ? (
+                {isLoading ? (
                   <ActivityIndicator color={colors.paper} />
                 ) : isPlaying ? (
                   <Pause size={32} color={colors.paper} fill={colors.paper} />
@@ -159,13 +150,14 @@ export const PlayerScreen: React.FC<any> = ({ route, navigation }) => {
                 )}
               </TouchableOpacity>
               
-              <TouchableOpacity>
+              <TouchableOpacity onPress={playNext}>
                 <SkipForward size={36} color={colors.ink} fill={colors.ink} />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity>
-              <Repeat size={24} color={colors.pencilLight} />
+
+            <TouchableOpacity onPress={toggleLoop}>
+              <Repeat size={24} color={isLooping ? colors.ink : colors.pencilLight} />
             </TouchableOpacity>
           </View>
         </View>
