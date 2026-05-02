@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { PaperText } from '../../../shared/components/PaperText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '../../../shared/components/Input';
 import { Button } from '../../../shared/components/Button';
@@ -18,9 +19,6 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
       Alert.alert('Error', 'Please enter your email.');
       return;
     }
-
-    console.log('Attempting login...');
-    console.log('API URL:', authService.login.toString()); // Just to check
     
     setLoading(true);
     try {
@@ -28,7 +26,6 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
       setAuth(data, data.token);
       navigation.replace('Dashboard');
     } catch (error: any) {
-      console.error(error);
       Alert.alert('Login Failed', error.response?.data?.message || 'Could not connect to the server.');
     } finally {
       setLoading(false);
@@ -43,8 +40,8 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
-            <Text style={styles.title}>Welcome Back!</Text>
-            <Text style={styles.subtitle}>Sign in to your paper world.</Text>
+            <PaperText style={styles.title}>Welcome Back!</PaperText>
+            <PaperText style={styles.subtitle}>Sign in to your paper world.</PaperText>
 
             <Input
               label="Email"
@@ -71,13 +68,13 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
             />
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>New here? </Text>
-              <Text 
+              <PaperText style={styles.footerText}>New here? </PaperText>
+              <PaperText 
                 style={styles.link} 
                 onPress={() => navigation.navigate('Register')}
               >
                 Create an account
-              </Text>
+              </PaperText>
             </View>
           </View>
         </ScrollView>
@@ -126,7 +123,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 20,
-    fontFamily: 'PatrickHand_400Regular',
     color: colors.pencilLight,
     marginBottom: 32,
     textAlign: 'center',
@@ -142,12 +138,10 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.pencilLight,
     fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
   },
   link: {
     color: colors.blue,
     fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
     textDecorationLine: 'underline',
   },
 });

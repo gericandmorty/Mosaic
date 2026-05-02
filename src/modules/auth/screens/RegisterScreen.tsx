@@ -1,33 +1,38 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '../../../shared/components/Input';
 import { Button } from '../../../shared/components/Button';
 import { colors } from '../../../shared/theme/colors';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.slice';
+import { PaperText } from '../../../shared/components/PaperText';
 
 export const RegisterScreen: React.FC<any> = ({ navigation }) => {
-  const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuthStore();
 
   const handleRegister = async () => {
-    if (!email || !name) {
+    if (!email || !password || !displayName) {
       Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
       return;
     }
 
     setLoading(true);
     try {
-      const data = await authService.register(email, name);
+      const data = await authService.register(email, password, displayName);
       setAuth(data, data.token);
       navigation.replace('Dashboard');
     } catch (error: any) {
-      console.error(error);
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Could not connect to the server.');
+      Alert.alert('Registration Failed', error.response?.data?.message || 'Please check your details and try again.');
     } finally {
       setLoading(false);
     }
@@ -41,14 +46,14 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
-            <Text style={styles.title}>Join Mosaic</Text>
-            <Text style={styles.subtitle}>Start your creative journey.</Text>
+            <PaperText style={styles.title}>Join Mosaic</PaperText>
+            <PaperText style={styles.subtitle}>Start your creative journey.</PaperText>
 
             <Input
               label="Full Name"
               placeholder="Noah Smith"
-              value={name}
-              onChangeText={setName}
+              value={displayName}
+              onChangeText={setDisplayName}
             />
 
             <Input
@@ -76,13 +81,13 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
             />
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Text 
+              <PaperText style={styles.footerText}>Already have an account? </PaperText>
+              <PaperText 
                 style={styles.link} 
                 onPress={() => navigation.goBack()}
               >
                 Sign In
-              </Text>
+              </PaperText>
             </View>
           </View>
         </ScrollView>
@@ -121,7 +126,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 42,
-    fontFamily: 'PatrickHand_400Regular',
     color: colors.ink,
     marginBottom: 8,
     textAlign: 'center',
@@ -129,7 +133,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 20,
-    fontFamily: 'PatrickHand_400Regular',
     color: colors.pencilLight,
     marginBottom: 32,
     textAlign: 'center',
@@ -145,12 +148,10 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.pencilLight,
     fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
   },
   link: {
     color: colors.blue,
     fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
     textDecorationLine: 'underline',
   },
 });

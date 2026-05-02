@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AuthNavigator from './src/app/navigation/AuthNavigator';
-import { StatusBar } from 'expo-status-bar';
 import { registerRootComponent } from 'expo';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
+import * as SplashScreen from 'expo-splash-screen';
 
-function App() {
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+export default function App() {
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <NavigationContainer>
+    <NavigationContainer onReady={onLayoutRootView}>
       <AuthNavigator />
-      <StatusBar style="auto" />
     </NavigationContainer>
   );
 }
