@@ -1,10 +1,12 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export function PaperText({ style, children, ...props }: TextProps) {
+  const colors = useThemeColors();
+  
   return (
-    <Text style={[styles.text, style]} {...props}>
+    <Text style={[styles.text, { color: colors.ink }, style]} {...props}>
       {children}
     </Text>
   );
@@ -13,7 +15,6 @@ export function PaperText({ style, children, ...props }: TextProps) {
 const styles = StyleSheet.create({
   text: {
     fontFamily: 'PatrickHand_400Regular',
-    color: colors.ink,
     fontSize: 18, // Default size
   },
 });
