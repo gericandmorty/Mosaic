@@ -1,89 +1,114 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Input } from '../../../shared/components/Input';
-import { Button } from '../../../shared/components/Button';
-import { colors } from '../../../shared/theme/colors';
+import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.slice';
+import { PaperText } from '../../../shared/components/PaperText';
+
+const LOGO_IMG = require('../../../assets/logo/logo.png');
 
 export const RegisterScreen: React.FC<any> = ({ navigation }) => {
-  const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const themeColors = useThemeColors();
   const { setAuth } = useAuthStore();
 
   const handleRegister = async () => {
-    if (!email || !name) {
+    if (!email || !password || !displayName) {
       Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
       return;
     }
 
     setLoading(true);
     try {
-      const data = await authService.register(email, name);
+      const data = await authService.register({ email, password, displayName });
       setAuth(data, data.token);
-      navigation.replace('Dashboard');
+      // No need to navigate, AuthNavigator handles it automatically!
     } catch (error: any) {
-      console.error(error);
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Could not connect to the server.');
+      Alert.alert('Registration Failed', error.response?.data?.message || 'Please check your details and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
+        style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            <Text style={styles.title}>Join Mosaic</Text>
-            <Text style={styles.subtitle}>Start your creative journey.</Text>
-
-            <Input
-              label="Full Name"
-              placeholder="Noah Smith"
-              value={name}
-              onChangeText={setName}
-            />
-
-            <Input
-              label="Email"
-              placeholder="pencil@example.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Input
-              label="Password"
-              placeholder="********"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-
-            <Button 
-              title="Create Account" 
-              onPress={handleRegister} 
-              loading={loading}
-              style={styles.button}
-            />
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Text 
-                style={styles.link} 
-                onPress={() => navigation.goBack()}
-              >
-                Sign In
-              </Text>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.headerSection}>
+            <View style={[styles.logoCircle, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]}>
+              <Image source={LOGO_IMG} style={styles.logoImage} />
             </View>
+            <PaperText style={[styles.title, { color: themeColors.ink }]}>New Sketchbook</PaperText>
+            <PaperText style={[styles.subtitle, { color: themeColors.pencilLight }]}>Create an account to start drawing</PaperText>
+          </View>
+
+          <View style={[styles.formCard, { backgroundColor: themeColors.paper, borderColor: themeColors.pencil }]}>
+            <View style={styles.inputGroup}>
+              <PaperText style={[styles.label, { color: themeColors.pencil }]}>Full Name</PaperText>
+              <TextInput
+                style={[styles.input, { color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                placeholder="Leonardo da Vinci"
+                placeholderTextColor={themeColors.pencilLight}
+                value={displayName}
+                onChangeText={setDisplayName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <PaperText style={[styles.label, { color: themeColors.pencil }]}>Email</PaperText>
+              <TextInput
+                style={[styles.input, { color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                placeholder="pencil@example.com"
+                placeholderTextColor={themeColors.pencilLight}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <PaperText style={[styles.label, { color: themeColors.pencil }]}>Password</PaperText>
+              <TextInput
+                style={[styles.input, { color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                placeholder="••••••••"
+                placeholderTextColor={themeColors.pencilLight}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.registerBtn, { backgroundColor: themeColors.pencil }]} 
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={themeColors.paper} />
+              ) : (
+                <PaperText style={[styles.registerBtnText, { color: themeColors.paper }]}>Create Account</PaperText>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footer}>
+            <PaperText style={[styles.footerText, { color: themeColors.pencilLight }]}>Already have an account?</PaperText>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <PaperText style={[styles.footerLink, { color: themeColors.blue }]}>Sign In</PaperText>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -94,63 +119,94 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
   },
   scrollContent: {
+    padding: 30,
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
   },
-  card: {
-    backgroundColor: colors.paper,
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 3,
-    borderColor: colors.pencil,
-    padding: 32,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 35,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 10, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 0,
-    elevation: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    borderTopLeftRadius: 25,
+    borderBottomRightRadius: 35,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
-    fontSize: 42,
+    fontSize: 32,
     fontFamily: 'PatrickHand_400Regular',
-    color: colors.ink,
-    marginBottom: 8,
     textAlign: 'center',
-    transform: [{ rotate: '1.5deg' }],
   },
   subtitle: {
-    fontSize: 20,
-    fontFamily: 'PatrickHand_400Regular',
-    color: colors.pencilLight,
-    marginBottom: 32,
+    fontSize: 16,
     textAlign: 'center',
   },
-  button: {
-    marginTop: 16,
+  formCard: {
+    padding: 25,
+    borderRadius: 20,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 0,
+    elevation: 5,
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  input: {
+    height: 50,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontFamily: 'PatrickHand_400Regular',
+    fontSize: 18,
+  },
+  registerBtn: {
+    height: 55,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  registerBtnText: {
+    fontSize: 20,
+    fontFamily: 'PatrickHand_400Regular',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 30,
+    gap: 8,
   },
   footerText: {
-    color: colors.pencilLight,
-    fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
+    fontSize: 16,
   },
-  link: {
-    color: colors.blue,
-    fontSize: 18,
-    fontFamily: 'PatrickHand_400Regular',
+  footerLink: {
+    fontSize: 16,
     textDecorationLine: 'underline',
   },
 });

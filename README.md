@@ -1,50 +1,32 @@
-# Welcome to your Expo app 👋
+<div align="center">
+  <img src="src/assets/logo/logo.png" width="200" alt="Mosaic Logo" />
+  <h1>Mosaic</h1>
+</div>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
+Mosaic is a music application designed with a unique sketchbook and paper-themed aesthetic. It provides a tactile, hand-drawn user experience that combines artistic design with modern functionality. The application features a dynamic theme engine supporting both light and dark modes, persistent user profiles, and a streamlined dashboard for content discovery.
 
-## Get started
+## Core Features
+- Sketchbook UI: A custom design system built with a paper and pencil aesthetic.
+- Dynamic Theming: Real-time switching between light and dark modes with persistent state.
+- Authentication: Secure user registration and login integrated with Firebase.
+- Profile Management: Customizable user settings and appearance controls.
+- Responsive Navigation: A fluid sidebar and stack-based navigation system.
 
-1. Install dependencies
+## Technology Stack
 
-   ```bash
-   npm install
-   ```
+### Frontend
+- React Native: Core framework for cross-platform mobile development.
+- Expo: Development platform and build pipeline.
+- Zustand: Lightweight state management for authentication and theme persistence.
+- React Navigation: Type-safe navigation across the application.
+- Lucide React Native: Clean, consistent iconography.
+- Axios: Promise-based HTTP client for API communication.
 
-2. Start the app
+### Backend
+- ASP.NET Core: High-performance web API framework.
+- Firebase: Managed service for authentication and cloud storage.
+- C#: Primary programming language for backend logic and service architecture.
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Design Philosophy
+Mosaic prioritizes visual excellence and user engagement through micro-animations, hand-drawn components, and a curated color palette that avoids harsh digital tones in favor of soft, paper-like textures.
