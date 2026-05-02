@@ -6,7 +6,9 @@ import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { useAuthStore } from '../../auth/store/auth.slice';
 import { PaperText } from '../../../shared/components/PaperText';
 import { Sidebar } from '../../../shared/components/Sidebar';
-import { Search, Bell, Play, Plus, Menu as MenuIcon } from 'lucide-react-native';
+import { Search, Bell, Play, Plus, Menu as MenuIcon, X } from 'lucide-react-native';
+import { musicService, Track } from '../../music/services/music.service';
+import { TextInput, ActivityIndicator } from 'react-native';
 
 const MusicIcon = ({ size, color }: any) => (
   <View style={{ width: size, height: size, borderRadius: size/2, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
@@ -14,18 +16,21 @@ const MusicIcon = ({ size, color }: any) => (
   </View>
 );
 
-const DashboardCard = ({ title, subtitle, color, rotation }: any) => {
+const DashboardCard = ({ title, subtitle, color, rotation, onPress }: any) => {
   const themeColors = useThemeColors();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   return (
-    <TouchableOpacity style={[
-      styles.dashCard, 
-      { 
-        backgroundColor: color || themeColors.paper, 
-        borderColor: themeColors.pencil,
-        transform: [{ rotate: rotation || '0deg' }] 
-      }
-    ]}>
+    <TouchableOpacity 
+      style={[
+        styles.dashCard, 
+        { 
+          backgroundColor: color || themeColors.paper, 
+          borderColor: themeColors.pencil,
+          transform: [{ rotate: rotation || '0deg' }] 
+        }
+      ]}
+      onPress={onPress}
+    >
       <View style={[styles.dashCardImagePlaceholder, { borderColor: themeColors.pencil + '40' }]}>
         <MusicIcon size={32} color={themeColors.pencilLight} />
       </View>
@@ -42,6 +47,27 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const themeColors = useThemeColors();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      navigation.navigate('Search', { initialQuery: searchQuery });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -57,7 +83,20 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             </TouchableOpacity>
             <View style={[styles.searchBar, { borderColor: themeColors.pencil, backgroundColor: themeColors.pencil + '10' }]}>
               <Search size={18} color={themeColors.pencilLight} />
-              <PaperText style={[styles.searchText, { color: themeColors.pencilLight }]}>Search...</PaperText>
+              <TextInput
+                style={[styles.searchInput, { color: themeColors.ink }]}
+                placeholder="Search music..."
+                placeholderTextColor={themeColors.pencilLight}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch}>
+                  <X size={18} color={themeColors.pencilLight} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -78,10 +117,27 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             </View>
             
             <View style={styles.grid}>
-              <DashboardCard title="Midnight" subtitle="Lo-fi beats" color={isDarkMode ? '#2A2A2A' : '#FFF5E1'} rotation="-2deg" />
-              <DashboardCard title="Storm" subtitle="Fast strokes" color={isDarkMode ? '#242A2E' : '#E1F5FF'} rotation="1.5deg" />
-              <DashboardCard title="Eraser" subtitle="Textures" color={isDarkMode ? '#2A242E' : '#F5E1FF'} rotation="-1deg" />
-              <DashboardCard title="Ink Spills" subtitle="Bold & Dark" color={isDarkMode ? '#242E24' : '#E1FFE1'} rotation="2.5deg" />
+              {isSearching ? (
+                <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
+              ) : searchResults.length > 0 ? (
+                searchResults.slice(0, 4).map((track, index) => (
+                  <DashboardCard 
+                    key={track.id}
+                    title={track.title} 
+                    subtitle={track.artist} 
+                    color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
+                    rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
+                    onPress={() => navigation.navigate('Player', { track })}
+                  />
+                ))
+              ) : (
+                <>
+                  <DashboardCard title="Midnight" subtitle="Lo-fi beats" color={isDarkMode ? '#2A2A2A' : '#FFF5E1'} rotation="-2deg" />
+                  <DashboardCard title="Storm" subtitle="Fast strokes" color={isDarkMode ? '#242A2E' : '#E1F5FF'} rotation="1.5deg" />
+                  <DashboardCard title="Eraser" subtitle="Textures" color={isDarkMode ? '#2A242E' : '#F5E1FF'} rotation="-1deg" />
+                  <DashboardCard title="Ink Spills" subtitle="Bold & Dark" color={isDarkMode ? '#242E24' : '#E1FFE1'} rotation="2.5deg" />
+                </>
+              )}
             </View>
           </View>
 
@@ -174,7 +230,16 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   searchText: {
-    fontSize: 14,
+    fontSize: 16,
+    flex: 1,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    marginLeft: 10,
+    fontFamily: 'PatrickHand_400Regular',
+    fontSize: 18,
   },
   headerIcons: {
     flexDirection: 'row',

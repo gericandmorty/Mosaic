@@ -4,6 +4,8 @@ import { LoginScreen } from '../../modules/auth/screens/LoginScreen';
 import { RegisterScreen } from '../../modules/auth/screens/RegisterScreen';
 import { DashboardScreen } from '../../modules/dashboard/screens/DashboardScreen';
 import { ProfileScreen } from '../../modules/profile/screens/ProfileScreen';
+import { SearchScreen } from '../../modules/music/screens/SearchScreen';
+import { PlayerScreen } from '../../modules/music/screens/PlayerScreen';
 
 import { useAuthStore } from '../../modules/auth/store/auth.slice';
 
@@ -24,6 +26,8 @@ const AuthNavigator = () => {
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="Player" component={PlayerScreen} />
         </>
       )}
     </Stack.Navigator>
