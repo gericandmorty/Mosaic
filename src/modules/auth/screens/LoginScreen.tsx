@@ -3,10 +3,10 @@ import { View, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { PaperText } from '../../../shared/components/PaperText';
-import { colors } from '../../../shared/theme/colors';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.slice';
-import { Music } from 'lucide-react-native';
+
+const LOGO_IMG = require('../../../assets/logo/logo.png');
 
 export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const [email, setEmail] = useState('geric@gmail.com');
@@ -20,7 +20,6 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
     setLoading(true);
     try {
       const response = await authService.login({ email, password });
-      // The response itself contains the user info (email, displayName, etc.)
       setAuth(response, response.token);
       // No need to navigate, AuthNavigator handles it automatically!
     } catch (error) {
@@ -39,7 +38,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.headerSection}>
             <View style={[styles.logoCircle, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]}>
-              <Music size={40} color={themeColors.ink} />
+              <Image source={LOGO_IMG} style={styles.logoImage} />
             </View>
             <PaperText style={[styles.title, { color: themeColors.ink }]}>Welcome Back</PaperText>
             <PaperText style={[styles.subtitle, { color: themeColors.pencilLight }]}>Sign in to your sketchbook</PaperText>
@@ -119,6 +118,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderTopLeftRadius: 30,
     borderBottomRightRadius: 40,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 32,

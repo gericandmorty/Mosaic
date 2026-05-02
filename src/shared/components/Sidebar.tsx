@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Library, Heart, LogOut, Music, ChevronLeft, User } from 'lucide-react-native';
+import { Home, Library, Heart, LogOut, ChevronLeft, User } from 'lucide-react-native';
 import { PaperText } from './PaperText';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useAuthStore } from '../../modules/auth/store/auth.slice';
 
+const LOGO_IMG = require('../../assets/logo/logo.png');
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = 280;
 
@@ -104,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeRoute, onNavigat
         <View style={styles.headerRow}>
           <View style={styles.logoSection}>
             <View style={[styles.logoCircle, { borderColor: colors.pencil }]}>
-              <Music size={28} color={colors.ink} />
+              <Image source={LOGO_IMG} style={styles.logoImage} />
             </View>
             <PaperText numberOfLines={1} style={[styles.logoText, { color: colors.ink }]}>Mosaic</PaperText>
           </View>
@@ -179,6 +180,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 18,
     borderBottomRightRadius: 24,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   logoText: {
     fontSize: 26,

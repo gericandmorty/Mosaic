@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.slice';
 import { PaperText } from '../../../shared/components/PaperText';
-import { Music } from 'lucide-react-native';
+
+const LOGO_IMG = require('../../../assets/logo/logo.png');
 
 export const RegisterScreen: React.FC<any> = ({ navigation }) => {
   const [displayName, setDisplayName] = useState('');
@@ -47,7 +48,7 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.headerSection}>
             <View style={[styles.logoCircle, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]}>
-              <Music size={40} color={themeColors.ink} />
+              <Image source={LOGO_IMG} style={styles.logoImage} />
             </View>
             <PaperText style={[styles.title, { color: themeColors.ink }]}>New Sketchbook</PaperText>
             <PaperText style={[styles.subtitle, { color: themeColors.pencilLight }]}>Create an account to start drawing</PaperText>
@@ -138,6 +139,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderTopLeftRadius: 25,
     borderBottomRightRadius: 35,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 32,
