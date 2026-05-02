@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { useAuthStore } from '../../auth/store/auth.slice';
+import { useMusicStore } from '../../music/store/music.slice';
 import { PaperText } from '../../../shared/components/PaperText';
 import { Sidebar } from '../../../shared/components/Sidebar';
-import { Search, Bell, Play, Plus, Menu as MenuIcon } from 'lucide-react-native';
+import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { Search, Bell, Play, Plus, Menu as MenuIcon, X } from 'lucide-react-native';
+import { musicService, Track } from '../../music/services/music.service';
+import { TextInput, ActivityIndicator } from 'react-native';
+import { historyService } from '../../history/services/history.service';
+import { likedService } from '../../liked/services/liked.service';
+import { playlistsService, Playlist } from '../../playlists/services/playlists.service';
 
 const MusicIcon = ({ size, color }: any) => (
   <View style={{ width: size, height: size, borderRadius: size/2, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
@@ -14,20 +21,28 @@ const MusicIcon = ({ size, color }: any) => (
   </View>
 );
 
-const DashboardCard = ({ title, subtitle, color, rotation }: any) => {
+const DashboardCard = ({ title, subtitle, color, rotation, imageUrl, cardWidth, onPress }: any) => {
   const themeColors = useThemeColors();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   return (
-    <TouchableOpacity style={[
-      styles.dashCard, 
-      { 
-        backgroundColor: color || themeColors.paper, 
-        borderColor: themeColors.pencil,
-        transform: [{ rotate: rotation || '0deg' }] 
-      }
-    ]}>
-      <View style={[styles.dashCardImagePlaceholder, { borderColor: themeColors.pencil + '40' }]}>
-        <MusicIcon size={32} color={themeColors.pencilLight} />
+    <TouchableOpacity 
+      style={[
+        styles.dashCard, 
+        cardWidth ? { width: cardWidth } : {},
+        { 
+          backgroundColor: color || themeColors.paper, 
+          borderColor: themeColors.pencil,
+          transform: [{ rotate: rotation || '0deg' }] 
+        }
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.dashCardImagePlaceholder, { borderColor: themeColors.pencil + '40' }, imageUrl && { borderWidth: 0, backgroundColor: 'transparent' }]}>
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+        ) : (
+          <MusicIcon size={32} color={themeColors.pencilLight} />
+        )}
       </View>
       <View style={styles.cardTextContent}>
         <PaperText numberOfLines={1} style={[styles.dashCardTitle, { color: themeColors.ink }]}>{title}</PaperText>
@@ -42,6 +57,56 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const themeColors = useThemeColors();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Data State
+  const [historySongs, setHistorySongs] = useState<Track[]>([]);
+  const [likedSongs, setLikedSongs] = useState<Track[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [fetchedHistory, fetchedLiked, fetchedPlaylists] = await Promise.all([
+        historyService.getRecentHistory(4),
+        likedService.getLikedSongs(),
+        playlistsService.getPlaylists()
+      ]);
+      setHistorySongs(fetchedHistory);
+      setLikedSongs(fetchedLiked);
+      setPlaylists(fetchedPlaylists);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data', error);
+    } finally {
+      setIsLoadingData(false);
+      setRefreshing(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, []);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    try {
+      navigation.navigate('Search', { initialQuery: searchQuery });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -57,7 +122,20 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
             </TouchableOpacity>
             <View style={[styles.searchBar, { borderColor: themeColors.pencil, backgroundColor: themeColors.pencil + '10' }]}>
               <Search size={18} color={themeColors.pencilLight} />
-              <PaperText style={[styles.searchText, { color: themeColors.pencilLight }]}>Search...</PaperText>
+              <TextInput
+                style={[styles.searchInput, { color: themeColors.ink }]}
+                placeholder="Search music..."
+                placeholderTextColor={themeColors.pencilLight}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch}>
+                  <X size={18} color={themeColors.pencilLight} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -68,47 +146,123 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor={themeColors.pencil}
+              colors={[themeColors.pencil]}
+            />
+          }
+        >
           <PaperText style={[styles.greeting, { color: themeColors.ink }]}>Good morning, {user?.displayName?.split(' ')[0] || 'Creator'}</PaperText>
           
+          {/* Playlists Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Recently Sketched</PaperText>
-              <TouchableOpacity><PaperText style={[styles.seeAll, { color: themeColors.blue }]}>See All</PaperText></TouchableOpacity>
+              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Your Playlists</PaperText>
+              <TouchableOpacity onPress={() => navigation.navigate('Playlists')}><PaperText style={[styles.seeAll, { color: themeColors.blue }]}>See All</PaperText></TouchableOpacity>
+            </View>
+            
+            {isLoadingData ? (
+              <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
+            ) : playlists.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 15, paddingHorizontal: 5 }}>
+                {playlists.map((playlist, index) => (
+                  <View key={playlist.id} style={{ width: 110 }}>
+                    <DashboardCard 
+                      title={playlist.name} 
+                      subtitle="Custom Playlist" 
+                      imageUrl={playlist.coverUrl}
+                      cardWidth="100%"
+                      color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
+                      rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
+                      onPress={() => navigation.navigate('PlaylistDetail', { playlist })}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
+                <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>No playlists yet. Create one!</PaperText>
+              </View>
+            )}
+          </View>
+
+          {/* Liked Songs Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Liked Songs</PaperText>
+              <TouchableOpacity onPress={() => navigation.navigate('Likes')}><PaperText style={[styles.seeAll, { color: themeColors.blue }]}>See All</PaperText></TouchableOpacity>
             </View>
             
             <View style={styles.grid}>
-              <DashboardCard title="Midnight" subtitle="Lo-fi beats" color={isDarkMode ? '#2A2A2A' : '#FFF5E1'} rotation="-2deg" />
-              <DashboardCard title="Storm" subtitle="Fast strokes" color={isDarkMode ? '#242A2E' : '#E1F5FF'} rotation="1.5deg" />
-              <DashboardCard title="Eraser" subtitle="Textures" color={isDarkMode ? '#2A242E' : '#F5E1FF'} rotation="-1deg" />
-              <DashboardCard title="Ink Spills" subtitle="Bold & Dark" color={isDarkMode ? '#242E24' : '#E1FFE1'} rotation="2.5deg" />
+              {isLoadingData ? (
+                <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
+              ) : likedSongs.length > 0 ? (
+                likedSongs.slice(0, 4).map((track, index, array) => (
+                  <DashboardCard 
+                    key={track.id}
+                    title={track.title} 
+                    subtitle={track.artist} 
+                    imageUrl={track.thumbnailUrl}
+                    color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
+                    rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
+                    onPress={() => {
+                      const { playQueue } = useMusicStore.getState();
+                      playQueue(array, index);
+                      navigation.navigate('Player', { track });
+                    }}
+                  />
+                ))
+              ) : (
+                <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
+                  <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>Heart some songs to see them here.</PaperText>
+                </View>
+              )}
             </View>
           </View>
 
+          {/* History Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Playlists</PaperText>
-              <TouchableOpacity style={[styles.createBtn, { borderColor: themeColors.pencil }]}>
-                <Plus size={14} color={themeColors.pencil} />
-                <PaperText style={[styles.createBtnText, { color: themeColors.pencil }]}>New</PaperText>
+              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Recently Sketched</PaperText>
+              <TouchableOpacity onPress={async () => {
+                await historyService.clearHistory();
+                setHistorySongs([]);
+              }}>
+                <PaperText style={[styles.seeAll, { color: themeColors.pencilLight }]}>Clear</PaperText>
               </TouchableOpacity>
             </View>
             
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              style={styles.horizontalScroll}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-              {['Sketchbook 1', 'Doodle Vibes', 'Deep Focus', 'Creative Flow'].map((name, i) => (
-                <TouchableOpacity key={i} style={styles.playlistCard}>
-                  <View style={[styles.playlistArt, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]}>
-                    <PaperText style={[styles.playlistArtText, { color: themeColors.pencilLight }]}>{name[0]}</PaperText>
-                  </View>
-                  <PaperText style={[styles.playlistName, { color: themeColors.ink }]}>{name}</PaperText>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.grid}>
+              {isLoadingData ? (
+                <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
+              ) : historySongs.length > 0 ? (
+                historySongs.map((track, index, array) => (
+                  <DashboardCard 
+                    key={track.id}
+                    title={track.title} 
+                    subtitle={track.artist} 
+                    imageUrl={track.thumbnailUrl}
+                    color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
+                    rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
+                    onPress={() => {
+                      const { playQueue } = useMusicStore.getState();
+                      playQueue(array, index);
+                      navigation.navigate('Player', { track });
+                    }}
+                  />
+                ))
+              ) : (
+                <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
+                  <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>No history yet. Start listening!</PaperText>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={[styles.quoteBox, { borderColor: themeColors.pencil, backgroundColor: themeColors.pencil + '05' }]}>
@@ -130,6 +284,8 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
         }} 
         onClose={() => setIsSidebarOpen(false)}
       />
+
+      <MiniPlayer />
     </View>
   );
 };
@@ -174,7 +330,16 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   searchText: {
-    fontSize: 14,
+    fontSize: 16,
+    flex: 1,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    marginLeft: 10,
+    fontFamily: 'PatrickHand_400Regular',
+    fontSize: 18,
   },
   headerIcons: {
     flexDirection: 'row',
@@ -236,10 +401,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dashCard: {
-    width: '46%',
-    padding: 12,
+    width: '31%',
+    padding: 8,
     borderWidth: 2,
-    borderRadius: 12,
+    borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 0.1,
@@ -248,8 +413,8 @@ const styles = StyleSheet.create({
   },
   dashCardImagePlaceholder: {
     aspectRatio: 1,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 6,
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -259,12 +424,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dashCardTitle: {
-    fontSize: 16,
-    marginBottom: 2,
+    fontSize: 13,
+    marginBottom: 0,
     fontFamily: 'PatrickHand_400Regular',
   },
   dashCardSubtitle: {
-    fontSize: 12,
+    fontSize: 10,
   },
   horizontalScroll: {
   },
@@ -328,4 +493,17 @@ const styles = StyleSheet.create({
   quoteAuthor: {
     fontSize: 14,
   },
+  emptyContainer: {
+    padding: 20,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    alignItems: 'center',
+    marginVertical: 10,
+    marginHorizontal: 5,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: 'PatrickHand_400Regular',
+  }
 });

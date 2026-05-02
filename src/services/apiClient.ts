@@ -6,13 +6,13 @@ const getBaseUrl = () => {
   if (__DEV__) {
     const host = Constants.expoConfig?.hostUri?.split(':').shift();
     const port = '5191';
-    
+
     if (Platform.OS === 'android') {
       return `http://10.0.2.2:${port}/api`;
     }
     return `http://${host || 'localhost'}:${port}/api`;
   }
-  return process.env.EXPO_PUBLIC_API_URL || 'https://your-production-url.com/api';
+  return process.env.EXPO_PUBLIC_API_URL;
 };
 
 export const apiClient = axios.create({
