@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Library, Heart, LogOut, ChevronLeft, User, Download } from 'lucide-react-native';
+import { Home, Library, Heart, LogOut, ChevronLeft, User, Download, Settings } from 'lucide-react-native';
 import { PaperText } from '../ui/PaperText';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuthStore } from '../../../modules/auth/store/auth.slice';
@@ -115,11 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeRoute, onNavigat
         </View>
 
         <View style={styles.navSection}>
-          <SidebarItem icon={Home} label="Home" route="Dashboard" />
           <SidebarItem icon={User} label="Profile" route="Profile" />
-          <SidebarItem icon={Library} label="Playlists" route="Playlists" />
-          <SidebarItem icon={Heart} label="Liked Songs" route="Likes" />
-          <SidebarItem icon={Download} label="Downloads" route="Downloads" />
+          <SidebarItem icon={Settings} label="Settings" route="Settings" />
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.pencil }]} />

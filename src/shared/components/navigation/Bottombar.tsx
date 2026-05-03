@@ -17,7 +17,6 @@ export const Bottombar = () => {
     { name: 'Search', icon: Search, route: 'Search' },
     { name: 'Your Library', icon: Library, route: 'Playlists' },
     { name: 'Premium', icon: CircleUser, route: 'Profile' },
-    { name: 'Create', icon: Plus, route: 'Dashboard' }, // Placeholder for now
   ];
 
   const activeRoute = route.name;

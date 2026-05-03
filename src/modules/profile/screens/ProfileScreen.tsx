@@ -5,8 +5,7 @@ import { useAuthStore } from '../../auth/store/auth.slice';
 import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { PaperText } from '../../../shared/components/ui/PaperText';
-import { Sidebar } from '../../../shared/components/navigation/Sidebar';
-import { User, Mail, Shield, Moon, Sun, ChevronRight, Camera } from 'lucide-react-native';
+import { User, Mail, Shield, Moon, Sun, ChevronRight, Camera, ChevronLeft } from 'lucide-react-native';
 
 export const ProfileScreen: React.FC<any> = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -40,9 +39,9 @@ export const ProfileScreen: React.FC<any> = ({ navigation }) => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={[styles.menuToggle, { borderColor: colors.pencil, backgroundColor: colors.paper }]} 
-            onPress={() => setIsSidebarOpen(true)}
+            onPress={() => navigation.navigate('Dashboard')}
           >
-            <User size={24} color={colors.ink} />
+            <ChevronLeft size={24} color={colors.ink} />
           </TouchableOpacity>
           <PaperText style={styles.headerTitle}>Sketchbook Profile</PaperText>
           <View style={{ width: 40 }} /> 
@@ -64,24 +63,6 @@ export const ProfileScreen: React.FC<any> = ({ navigation }) => {
             <PaperText style={styles.userEmail}>{user?.email}</PaperText>
           </View>
 
-          {/* Theme Section */}
-          <View style={[styles.section, { backgroundColor: colors.paper, borderColor: colors.pencil }]}>
-            <View style={styles.sectionHeader}>
-              <PaperText style={styles.sectionTitle}>Appearance</PaperText>
-            </View>
-            <View style={styles.themeRow}>
-              <View style={styles.themeLeft}>
-                {isDarkMode ? <Moon size={22} color={colors.pencil} /> : <Sun size={22} color={colors.pencil} />}
-                <PaperText style={styles.themeText}>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</PaperText>
-              </View>
-              <Switch 
-                value={isDarkMode} 
-                onValueChange={toggleTheme}
-                trackColor={{ false: '#767577', true: colors.blue }}
-                thumbColor={isDarkMode ? '#f4f3f4' : '#f4f3f4'}
-              />
-            </View>
-          </View>
 
           {/* Details Section */}
           <View style={[styles.section, { backgroundColor: colors.paper, borderColor: colors.pencil }]}>
@@ -101,15 +82,6 @@ export const ProfileScreen: React.FC<any> = ({ navigation }) => {
         </ScrollView>
       </SafeAreaView>
 
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        activeRoute="Profile" 
-        onNavigate={(route) => {
-          if (route !== 'Profile') navigation.navigate(route);
-          setIsSidebarOpen(false);
-        }} 
-        onClose={() => setIsSidebarOpen(false)}
-      />
     </View>
   );
 };

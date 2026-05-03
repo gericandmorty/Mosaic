@@ -13,6 +13,10 @@ import { LikedSongsScreen } from '../../modules/liked/screens/LikedSongsScreen';
 import { PlaylistsScreen } from '../../modules/playlists/screens/PlaylistsScreen';
 import { PlaylistDetailScreen } from '../../modules/playlists/screens/PlaylistDetailScreen';
 import { DownloadsScreen } from '../../modules/offline/screens/DownloadsScreen';
+import { SettingsScreen } from '../../modules/settings/screens/SettingsScreen';
+import { PrivacyPolicyScreen } from '../../modules/conditions/screens/PrivacyPolicyScreen';
+import { TermsOfServiceScreen } from '../../modules/conditions/screens/TermsOfServiceScreen';
+import { AboutScreen } from '../../modules/about/screens/AboutScreen';
 
 import { useAuthStore } from '../../modules/auth/store/auth.slice';
 
@@ -55,6 +59,10 @@ const AuthNavigator = () => {
           <Stack.Screen name="Playlists" component={PlaylistsScreen} />
           <Stack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
           <Stack.Screen name="Downloads" component={DownloadsScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+          <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
         </>
       )}
     </Stack.Navigator>
