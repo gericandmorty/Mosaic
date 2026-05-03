@@ -1,36 +1,117 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../auth/store/auth.slice';
 import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { PaperText } from '../../../shared/components/PaperText';
-import { Sidebar } from '../../../shared/components/Sidebar';
-import { User, Mail, Shield, Moon, Sun, ChevronRight, Camera } from 'lucide-react-native';
+import { PaperText } from '../../../shared/components/ui/PaperText';
+import { profileService } from '../services/profile.service';
+import { User, Mail, Shield, ChevronRight, Camera, ChevronLeft, Lock, Pencil, X, Check } from 'lucide-react-native';
 
 export const ProfileScreen: React.FC<any> = ({ navigation }) => {
-  const { user } = useAuthStore();
-  const { isDarkMode, toggleTheme } = useThemeStore();
+  const { user, updateUser } = useAuthStore();
   const colors = useThemeColors();
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [displayName, setDisplayName] = React.useState(user?.displayName || '');
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
 
-  const ProfileItem = ({ icon: Icon, label, value, onPress }: any) => (
-    <TouchableOpacity 
-      style={[styles.item, { borderBottomColor: colors.pencil + '20' }]} 
-      onPress={onPress}
-      disabled={!onPress}
-    >
+  const handlePickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'We need access to your photos to update your profile picture.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        uploadProfilePicture(result.assets[0].uri);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', 'Failed to open image picker: ' + e.message);
+    }
+  };
+
+  const uploadProfilePicture = async (uri: string) => {
+    try {
+      setIsUploading(true);
+      console.log('--- Upload Started ---');
+      console.log('URI:', uri);
+      
+      const response = await profileService.updateProfilePicture(uri);
+      
+      console.log('Upload Success Response:', response);
+      updateUser({ photoUrl: response.photoUrl });
+      Alert.alert('Success', 'Profile picture updated successfully!');
+    } catch (error: any) {
+      console.error('Upload Failed Details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      const errorMsg = error.response?.data?.message || error.message || 'Check your internet connection';
+      Alert.alert('Upload Failed', errorMsg);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    if (!displayName.trim()) {
+      Alert.alert('Error', 'Display name cannot be empty');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await profileService.updateDisplayName(displayName);
+      updateUser({ displayName });
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const ProfileItem = ({ icon: Icon, label, value, onPress, isInput, onChangeText, editable }: any) => (
+    <View style={[styles.item, { borderBottomColor: colors.pencil + '20' }]}>
       <View style={styles.itemLeft}>
         <View style={[styles.iconWrap, { backgroundColor: colors.pencil + '10' }]}>
           <Icon size={20} color={colors.pencil} />
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <PaperText style={styles.itemLabel}>{label}</PaperText>
-          {value && <PaperText style={styles.itemValue}>{value}</PaperText>}
+          {isInput && editable ? (
+            <TextInput
+              style={[styles.input, { color: colors.ink }]}
+              value={value}
+              onChangeText={onChangeText}
+              placeholder="Enter name"
+              autoFocus
+              placeholderTextColor={colors.pencilLight}
+            />
+          ) : (
+            value && <PaperText style={styles.itemValue}>{value}</PaperText>
+          )}
         </View>
       </View>
-      {onPress && <ChevronRight size={20} color={colors.pencilLight} />}
-    </TouchableOpacity>
+      {onPress && !editable && (
+        <TouchableOpacity onPress={onPress}>
+          <ChevronRight size={20} color={colors.pencilLight} />
+        </TouchableOpacity>
+      )}
+    </View>
   );
 
   return (
@@ -40,47 +121,45 @@ export const ProfileScreen: React.FC<any> = ({ navigation }) => {
         <View style={styles.header}>
           <TouchableOpacity 
             style={[styles.menuToggle, { borderColor: colors.pencil, backgroundColor: colors.paper }]} 
-            onPress={() => setIsSidebarOpen(true)}
+            onPress={() => navigation.navigate('Dashboard')}
           >
-            <User size={24} color={colors.ink} />
+            <ChevronLeft size={24} color={colors.ink} />
           </TouchableOpacity>
           <PaperText style={styles.headerTitle}>Sketchbook Profile</PaperText>
-          <View style={{ width: 40 }} /> 
+          <TouchableOpacity 
+            style={[styles.menuToggle, { borderColor: colors.pencil, backgroundColor: colors.paper }]} 
+            onPress={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? <X size={20} color={colors.ink} /> : <Pencil size={20} color={colors.ink} />}
+          </TouchableOpacity>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <View style={[styles.avatarWrap, { borderColor: colors.ink }]}>
-              <Image 
-                source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName || 'user'}` }} 
-                style={styles.avatar} 
-              />
-              <TouchableOpacity style={[styles.cameraBtn, { backgroundColor: colors.blue }]}>
-                <Camera size={16} color="#fff" />
-              </TouchableOpacity>
+              {isUploading ? (
+                <View style={styles.uploadingContainer}>
+                  <ActivityIndicator color={colors.blue} />
+                </View>
+              ) : (
+                <Image 
+                  source={{ uri: user?.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName || 'user'}` }} 
+                  style={styles.avatar} 
+                />
+              )}
+              {isEditing && (
+                <TouchableOpacity 
+                  style={[styles.cameraBtn, { backgroundColor: colors.blue }]}
+                  onPress={handlePickImage}
+                  disabled={isUploading}
+                >
+                  <Camera size={16} color="#fff" />
+                </TouchableOpacity>
+              )}
             </View>
             <PaperText style={styles.userName}>{user?.displayName || 'Creator'}</PaperText>
             <PaperText style={styles.userEmail}>{user?.email}</PaperText>
-          </View>
-
-          {/* Theme Section */}
-          <View style={[styles.section, { backgroundColor: colors.paper, borderColor: colors.pencil }]}>
-            <View style={styles.sectionHeader}>
-              <PaperText style={styles.sectionTitle}>Appearance</PaperText>
-            </View>
-            <View style={styles.themeRow}>
-              <View style={styles.themeLeft}>
-                {isDarkMode ? <Moon size={22} color={colors.pencil} /> : <Sun size={22} color={colors.pencil} />}
-                <PaperText style={styles.themeText}>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</PaperText>
-              </View>
-              <Switch 
-                value={isDarkMode} 
-                onValueChange={toggleTheme}
-                trackColor={{ false: '#767577', true: colors.blue }}
-                thumbColor={isDarkMode ? '#f4f3f4' : '#f4f3f4'}
-              />
-            </View>
           </View>
 
           {/* Details Section */}
@@ -88,28 +167,75 @@ export const ProfileScreen: React.FC<any> = ({ navigation }) => {
             <View style={styles.sectionHeader}>
               <PaperText style={styles.sectionTitle}>Account Details</PaperText>
             </View>
-            <ProfileItem icon={User} label="Display Name" value={user?.displayName} onPress={() => {}} />
+            <ProfileItem 
+              icon={User} 
+              label="Display Name" 
+              value={isEditing ? displayName : user?.displayName} 
+              isInput={true}
+              editable={isEditing}
+              onChangeText={setDisplayName}
+            />
             <ProfileItem icon={Mail} label="Email Address" value={user?.email} />
             <ProfileItem icon={Shield} label="Account Status" value="Active Artist" />
           </View>
 
-          <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.pencil }]}>
-            <PaperText style={styles.saveBtnText}>Save Changes</PaperText>
-          </TouchableOpacity>
+          <View style={[styles.section, { backgroundColor: colors.paper, borderColor: colors.pencil }]}>
+             <View style={styles.sectionHeader}>
+              <PaperText style={styles.sectionTitle}>Security</PaperText>
+            </View>
+            <ProfileItem 
+              icon={Lock} 
+              label="Password" 
+              value="********" 
+              editable={isEditing}
+              onPress={() => {
+                Alert.prompt(
+                  "Change Password",
+                  "Enter your new password (min 6 characters)",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { 
+                      text: "Update", 
+                      onPress: async (password: string | undefined) => {
+                        if (password && password.length >= 6) {
+                          try {
+                            await profileService.updatePassword(password);
+                            Alert.alert("Success", "Password updated successfully!");
+                          } catch (e: any) {
+                            Alert.alert("Error", e.response?.data?.message || "Failed to update password");
+                          }
+                        } else {
+                          Alert.alert("Error", "Password too short");
+                        }
+                      }
+                    }
+                  ],
+                  "secure-text"
+                );
+              }} 
+            />
+          </View>
+
+          {isEditing && (
+            <TouchableOpacity 
+              style={[styles.saveBtn, { backgroundColor: isUpdating ? colors.pencilLight : colors.blue }]}
+              onPress={handleSaveChanges}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View style={styles.btnContent}>
+                  <Check size={20} color="#fff" />
+                  <PaperText style={styles.saveBtnText}>Save Changes</PaperText>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>
       </SafeAreaView>
-
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        activeRoute="Profile" 
-        onNavigate={(route) => {
-          if (route !== 'Profile') navigation.navigate(route);
-          setIsSidebarOpen(false);
-        }} 
-        onClose={() => setIsSidebarOpen(false)}
-      />
     </View>
   );
 };
@@ -156,11 +282,21 @@ const styles = StyleSheet.create({
     padding: 5,
     position: 'relative',
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatar: {
     width: '100%',
     height: '100%',
     borderRadius: 55,
+  },
+  uploadingContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 55,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cameraBtn: {
     position: 'absolute',
@@ -205,20 +341,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PatrickHand_400Regular',
     opacity: 0.8,
   },
-  themeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 5,
-  },
-  themeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  themeText: {
-    fontSize: 18,
-  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,6 +352,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   iconWrap: {
     width: 36,
@@ -245,6 +368,12 @@ const styles = StyleSheet.create({
   itemValue: {
     fontSize: 18,
   },
+  input: {
+    fontSize: 18,
+    fontFamily: 'PatrickHand_400Regular',
+    padding: 0,
+    marginTop: 2,
+  },
   saveBtn: {
     height: 55,
     borderRadius: 15,
@@ -256,6 +385,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 0,
     elevation: 5,
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   saveBtnText: {
     color: '#fff',

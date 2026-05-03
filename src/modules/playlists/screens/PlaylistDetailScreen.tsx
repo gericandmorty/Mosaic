@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Play, X, ListMusic, Shuffle } from 'lucide-react-native';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { playlistsService, Playlist, PlaylistTrack } from '../services/playlists.service';
 import { useMusicStore } from '../../music/store/music.slice';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
 import { offlineService } from '../../offline/services/offline.service';
 import { Download, CheckCircle } from 'lucide-react-native';
 
@@ -30,7 +30,7 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
       setLoading(true);
       const data = await playlistsService.getPlaylistTracks(playlist.id);
       setTracks(data);
-      
+
       // Check which ones are downloaded
       const downloaded = await offlineService.getDownloadedTracks();
       const ids = new Set(downloaded.map(t => t.id));
@@ -94,7 +94,7 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
           duration: track.duration,
           url: ''
         });
-        
+
         if (success) {
           setDownloadedIds(prev => new Set([...prev, track.youtubeId]));
         }
@@ -114,7 +114,7 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
   };
 
   const renderItem = ({ item, index }: { item: PlaylistTrack; index: number }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.trackCard, { borderColor: colors.pencil }]}
       onPress={() => handlePlaySong(index)}
     >
@@ -143,11 +143,11 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
           <PaperText style={[styles.headerSubtitle, { color: colors.pencilLight }]}>{tracks.length} Tracks</PaperText>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <TouchableOpacity 
-            onPress={handleDownloadPlaylist} 
+          <TouchableOpacity
+            onPress={handleDownloadPlaylist}
             disabled={isDownloading}
             style={[
-              styles.playBtn, 
+              styles.playBtn,
               { backgroundColor: colors.pencil },
               isDownloading && { backgroundColor: 'transparent', borderColor: colors.pencil, borderWidth: 2, borderStyle: 'dashed', width: 'auto', paddingHorizontal: 15 }
             ]}
@@ -189,7 +189,7 @@ export const PlaylistDetailScreen: React.FC<any> = ({ route, navigation }) => {
           contentContainerStyle={styles.listContainer}
         />
       )}
-      
+
       <MiniPlayer />
     </SafeAreaView>
   );

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { musicService, Track } from '../services/music.service';
 import { ChevronDown, Play, Pause, SkipForward, SkipBack, Heart, Share2, Repeat, Shuffle } from 'lucide-react-native';
 

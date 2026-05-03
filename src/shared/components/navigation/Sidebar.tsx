@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Dimensions, TouchableWithoutFeedback, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Library, Heart, LogOut, ChevronLeft, User, Download } from 'lucide-react-native';
-import { PaperText } from './PaperText';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useAuthStore } from '../../modules/auth/store/auth.slice';
+import { Home, Library, Heart, LogOut, ChevronLeft, User, Download, Settings } from 'lucide-react-native';
+import { PaperText } from '../ui/PaperText';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { useAuthStore } from '../../../modules/auth/store/auth.slice';
 
-const LOGO_IMG = require('../../assets/logo/logo.png');
+const LOGO_IMG = require('../../../assets/logo/logo.png');
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = 280;
 
@@ -56,25 +56,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeRoute, onNavigat
 
   const SidebarItem = ({ icon: Icon, label, route }: { icon: any, label: string, route: string }) => {
     const isActive = activeRoute === route;
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[
-          styles.item, 
+          styles.item,
           isActive && [styles.activeItem, { borderColor: colors.pencil }]
-        ]} 
+        ]}
         onPress={() => {
           onNavigate(route);
           onClose();
         }}
       >
-        <Icon 
-          size={24} 
-          color={isActive ? colors.ink : colors.pencilLight} 
+        <Icon
+          size={24}
+          color={isActive ? colors.ink : colors.pencilLight}
           strokeWidth={isActive ? 2.5 : 2}
         />
         <PaperText numberOfLines={1} style={[
-          styles.itemText, 
+          styles.itemText,
           { color: isActive ? colors.ink : colors.pencilLight },
           isActive && styles.activeItemText
         ]}>
@@ -93,12 +93,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeRoute, onNavigat
 
       {/* Sidebar Container */}
       <Animated.View style={[
-        styles.container, 
-        { 
+        styles.container,
+        {
           transform: [{ translateX }],
           backgroundColor: colors.paper,
           borderColor: colors.pencil,
-          paddingTop: insets.top + 20, 
+          paddingTop: insets.top + 20,
           paddingBottom: insets.bottom + 20,
         }
       ]}>
@@ -115,11 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeRoute, onNavigat
         </View>
 
         <View style={styles.navSection}>
-          <SidebarItem icon={Home} label="Home" route="Dashboard" />
           <SidebarItem icon={User} label="Profile" route="Profile" />
-          <SidebarItem icon={Library} label="Playlists" route="Playlists" />
-          <SidebarItem icon={Heart} label="Liked Songs" route="Likes" />
-          <SidebarItem icon={Download} label="Downloads" route="Downloads" />
+          <SidebarItem icon={Settings} label="Settings" route="Settings" />
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.pencil }]} />

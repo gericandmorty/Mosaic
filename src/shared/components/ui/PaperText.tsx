@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export function PaperText({ style, children, ...props }: TextProps) {
   const colors = useThemeColors();

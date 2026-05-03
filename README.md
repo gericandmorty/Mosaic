@@ -13,6 +13,7 @@ Mosaic is a music application designed with a unique sketchbook and paper-themed
 - **Persistent Sessions**: Auto-login capabilities powered by persistent state management—stay logged in even after closing the app.
 - **Optimized Search**: Lightning-fast music discovery with intelligent result limits to ensure stability and speed.
 - **Sketchbook UI**: A custom design system built with a paper and pencil aesthetic, now featuring "Downloaded" status indicators.
+- **Profile Management**: Integrated "Edit Mode" for updating display names, profile pictures (via Cloudinary), and passwords securely.
 
 ## Technology Stack
 
@@ -40,3 +41,7 @@ Mosaic prioritizes visual excellence and user engagement through micro-animation
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+For access to the backend repository or any inquiries, please contact:
+**Geric Morit** - [gericmorit.dev@gmail.com](mailto:gericmorit.dev@gmail.com)

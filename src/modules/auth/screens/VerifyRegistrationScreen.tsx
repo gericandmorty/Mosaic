@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { ChevronLeft } from 'lucide-react-native';
 import { authService } from '../services/auth.service';
 

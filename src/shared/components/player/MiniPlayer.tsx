@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { PaperText } from './PaperText';
-import { useMusicStore } from '../../modules/music/store/music.slice';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { PaperText } from '../ui/PaperText';
+import { useMusicStore } from '../../../modules/music/store/music.slice';
 import { Play, Pause } from 'lucide-react-native';
 
 export const MiniPlayer = () => {
@@ -14,13 +14,13 @@ export const MiniPlayer = () => {
   if (!currentTrack) return null;
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.container, { backgroundColor: colors.paper, borderColor: colors.pencil }]}
       onPress={() => navigation.navigate('Player', { track: currentTrack })}
       activeOpacity={0.9}
     >
       <Image source={{ uri: currentTrack.thumbnailUrl }} style={styles.art} />
-      
+
       <View style={styles.info}>
         <PaperText style={[styles.title, { color: colors.ink }]} numberOfLines={1}>
           {currentTrack.title}
@@ -30,8 +30,8 @@ export const MiniPlayer = () => {
         </PaperText>
       </View>
 
-      <TouchableOpacity 
-        style={styles.playBtn} 
+      <TouchableOpacity
+        style={styles.playBtn}
         onPress={(e) => {
           e.stopPropagation(); // Prevent opening full player
           togglePlayPause();
@@ -50,10 +50,10 @@ export const MiniPlayer = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    height: 60,
+    bottom: 90, // Raised to sit above the Bottombar
+    left: 15,
+    right: 15,
+    height: 64,
     borderRadius: 15,
     borderWidth: 3,
     flexDirection: 'row',
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 0,
     elevation: 5,
-    zIndex: 100,
+    zIndex: 1100,
   },
   art: {
     width: 40,
