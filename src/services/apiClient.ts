@@ -28,8 +28,13 @@ export const apiClient = axios.create({
   },
 });
 
-// Add a request interceptor to attach tokens if needed later
+import { useAuthStore } from '../modules/auth/store/auth.slice';
+
+// Add a request interceptor to attach tokens
 apiClient.interceptors.request.use(async (config) => {
-  // We can add token logic here when we have persistent storage
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });

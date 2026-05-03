@@ -163,8 +163,8 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
               onPress={() => setIsSidebarOpen(true)}
               style={[styles.profileBtn, { borderColor: themeColors.pencil }]}
             >
-              {user?.photoURL ? (
-                <Image source={{ uri: user.photoURL }} style={styles.profileImg} />
+              {user?.photoUrl || user?.photoURL ? (
+                <Image source={{ uri: user.photoUrl || user.photoURL }} style={styles.profileImg} />
               ) : (
                 <View style={[styles.profileImg, { backgroundColor: themeColors.pencil + '20', alignItems: 'center', justifyContent: 'center' }]}>
                   <PaperText style={{ color: themeColors.pencil, fontSize: 18 }}>{user?.displayName?.[0] || 'U'}</PaperText>

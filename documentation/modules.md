@@ -15,7 +15,8 @@ The frontend is organized into modular feature areas:
 - **Liked**: Dedicated screen for the user's "Liked Songs" collection.
 - **History**: Provides access to the user's listening history.
 - **Offline**: Manages local downloads using `expo-file-system` for playback without internet.
-- **Profile**: User account settings and profile overview.
+- **Profile**: User account settings and profile overview. 
+    - *Update*: Features an **Edit Mode** with support for display name updates and secure image selection via `expo-image-picker`.
 - **Landing**: Initial onboarding and welcome experience.
 
 ## State Management
@@ -35,4 +36,5 @@ The frontend is organized into modular feature areas:
 - **Lucide React Native**: Providing a clean, consistent set of icons throughout the app.
 - **React Native Reanimated**: Powers smooth animations and transitions.
 - **AsyncStorage**: Used for persistent local storage of settings, auth sessions, and offline metadata.
+- **Expo-ImagePicker**: Integrated for picking and cropping profile pictures from the device gallery.
 - **Google Fonts (Patrick Hand)**: Used for the signature "Paper/Sketch" aesthetic of the application.
