@@ -37,3 +37,6 @@ Mosaic prioritizes visual excellence and user engagement through micro-animation
 2. **Install dependencies**: `npm install`
 3. **Start the app**: `npx expo start`
 4. **Download music**: Open any playlist and tap the "Save Offline" icon!
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
