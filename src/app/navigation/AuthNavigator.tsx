@@ -2,6 +2,9 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LoginScreen } from '../../modules/auth/screens/LoginScreen';
 import { RegisterScreen } from '../../modules/auth/screens/RegisterScreen';
+import { ForgotPasswordScreen } from '../../modules/auth/screens/ForgotPasswordScreen';
+import { ResetPasswordScreen } from '../../modules/auth/screens/ResetPasswordScreen';
+import { VerifyRegistrationScreen } from '../../modules/auth/screens/VerifyRegistrationScreen';
 import { DashboardScreen } from '../../modules/dashboard/screens/DashboardScreen';
 import { ProfileScreen } from '../../modules/profile/screens/ProfileScreen';
 import { SearchScreen } from '../../modules/music/screens/SearchScreen';
@@ -38,6 +41,9 @@ const AuthNavigator = () => {
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+          <Stack.Screen name="VerifyRegistration" component={VerifyRegistrationScreen} />
         </>
       ) : (
         <>
