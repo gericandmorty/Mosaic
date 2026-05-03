@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, ChevronLeft, Play, X } from 'lucide-react-native';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { likedService } from '../services/liked.service';
 import { Track } from '../../music/services/music.service';
 import { useMusicStore } from '../../music/store/music.slice';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
 
 export const LikedSongsScreen: React.FC<any> = ({ navigation }) => {
   const colors = useThemeColors();
@@ -46,7 +46,7 @@ export const LikedSongsScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const renderItem = ({ item, index }: { item: Track; index: number }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.trackCard, { borderColor: colors.pencil }]}
       onPress={() => handlePlaySong(index)}
     >
@@ -87,7 +87,7 @@ export const LikedSongsScreen: React.FC<any> = ({ navigation }) => {
           contentContainerStyle={styles.listContainer}
         />
       )}
-      
+
       <MiniPlayer />
     </SafeAreaView>
   );

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ListMusic, ChevronLeft, Plus, Trash2 } from 'lucide-react-native';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { playlistsService, Playlist } from '../services/playlists.service';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
 
 export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
   const colors = useThemeColors();
@@ -34,8 +34,8 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
       'Enter a name for your playlist',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Create', 
+        {
+          text: 'Create',
           onPress: async (name?: string) => {
             if (name) {
               try {
@@ -55,8 +55,8 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
   const handleDeletePlaylist = (id: string) => {
     Alert.alert('Delete Playlist', 'Are you sure you want to delete this playlist?', [
       { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Delete', 
+      {
+        text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
@@ -71,7 +71,7 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const renderItem = ({ item }: { item: Playlist }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.card, { borderColor: colors.pencil }]}
       onPress={() => navigation.navigate('PlaylistDetail', { playlist: item })}
     >
@@ -117,7 +117,7 @@ export const PlaylistsScreen: React.FC<any> = ({ navigation }) => {
           ) : null
         }
       />
-      
+
       <MiniPlayer />
     </SafeAreaView>
   );

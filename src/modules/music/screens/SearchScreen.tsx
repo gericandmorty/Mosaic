@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, TextInput, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { PaperText } from '../../../shared/components/PaperText';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { PaperText } from '../../../shared/components/ui/PaperText';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
 import { useMusicStore } from '../store/music.slice';
 import { musicService, Track } from '../services/music.service';
 import { playlistsService, Playlist } from '../../playlists/services/playlists.service';
@@ -90,7 +90,7 @@ export const SearchScreen: React.FC<any> = ({ route, navigation }) => {
   };
 
   const renderTrackItem = ({ item, index }: { item: Track, index: number }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.trackItem, { borderBottomColor: colors.pencil + '20' }]}
       onPress={() => handleTrackPress(index)}
     >

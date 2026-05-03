@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../auth/store/auth.slice';
 import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
-import { PaperText } from '../../../shared/components/PaperText';
-import { Sidebar } from '../../../shared/components/Sidebar';
+import { PaperText } from '../../../shared/components/ui/PaperText';
+import { Sidebar } from '../../../shared/components/navigation/Sidebar';
 import { User, Mail, Shield, Moon, Sun, ChevronRight, Camera } from 'lucide-react-native';
 
 export const ProfileScreen: React.FC<any> = ({ navigation }) => {

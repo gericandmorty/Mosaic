@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/auth.slice';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 
 const LOGO_IMG = require('../../../assets/logo/logo.png');
 

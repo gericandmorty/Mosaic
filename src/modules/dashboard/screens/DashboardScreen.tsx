@@ -5,9 +5,10 @@ import { useThemeStore } from '../../../shared/theme/theme.slice';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { useAuthStore } from '../../auth/store/auth.slice';
 import { useMusicStore } from '../../music/store/music.slice';
-import { PaperText } from '../../../shared/components/PaperText';
-import { Sidebar } from '../../../shared/components/Sidebar';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { PaperText } from '../../../shared/components/ui/PaperText';
+import { Sidebar } from '../../../shared/components/navigation/Sidebar';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
+import { Bottombar } from '../../../shared/components/navigation/Bottombar';
 import { Search, Bell, Play, Plus, Menu as MenuIcon, X } from 'lucide-react-native';
 import { musicService, Track } from '../../music/services/music.service';
 import { TextInput, ActivityIndicator } from 'react-native';
@@ -16,38 +17,81 @@ import { likedService } from '../../liked/services/liked.service';
 import { playlistsService, Playlist } from '../../playlists/services/playlists.service';
 
 const MusicIcon = ({ size, color }: any) => (
-  <View style={{ width: size, height: size, borderRadius: size/2, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
-    <Play size={size/2} color={color} fill={color} />
+  <View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
+    <Play size={size / 2} color={color} fill={color} />
   </View>
 );
 
-const DashboardCard = ({ title, subtitle, color, rotation, imageUrl, cardWidth, onPress }: any) => {
+const FilterChip = ({ label, isActive, onPress }: any) => {
   const themeColors = useThemeColors();
-  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
+      onPress={onPress}
       style={[
-        styles.dashCard, 
-        cardWidth ? { width: cardWidth } : {},
-        { 
-          backgroundColor: color || themeColors.paper, 
-          borderColor: themeColors.pencil,
-          transform: [{ rotate: rotation || '0deg' }] 
+        styles.filterChip,
+        {
+          backgroundColor: isActive ? themeColors.pencil : themeColors.pencil + '15',
+          borderColor: themeColors.pencil
         }
       ]}
+    >
+      <PaperText style={[styles.filterChipText, { color: isActive ? themeColors.paper : themeColors.ink }]}>
+        {label}
+      </PaperText>
+    </TouchableOpacity>
+  );
+};
+
+const QuickPlayCard = ({ title, imageUrl, onPress }: any) => {
+  const themeColors = useThemeColors();
+  return (
+    <TouchableOpacity
+      style={[styles.quickCard, { backgroundColor: themeColors.pencil + '10', borderColor: themeColors.pencil }]}
       onPress={onPress}
     >
-      <View style={[styles.dashCardImagePlaceholder, { borderColor: themeColors.pencil + '40' }, imageUrl && { borderWidth: 0, backgroundColor: 'transparent' }]}>
+      <View style={styles.quickCardImageWrap}>
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+          <Image source={{ uri: imageUrl }} style={styles.quickCardImage} />
         ) : (
-          <MusicIcon size={32} color={themeColors.pencilLight} />
+          <View style={[styles.quickCardImage, { backgroundColor: themeColors.pencil + '20', alignItems: 'center', justifyContent: 'center' }]}>
+            <Play size={16} color={themeColors.pencilLight} />
+          </View>
         )}
       </View>
-      <View style={styles.cardTextContent}>
-        <PaperText numberOfLines={1} style={[styles.dashCardTitle, { color: themeColors.ink }]}>{title}</PaperText>
-        <PaperText numberOfLines={1} style={[styles.dashCardSubtitle, { color: themeColors.pencilLight }]}>{subtitle}</PaperText>
+      <PaperText numberOfLines={2} style={[styles.quickCardTitle, { color: themeColors.ink }]}>{title}</PaperText>
+    </TouchableOpacity>
+  );
+};
+
+const TrackListItem = ({ track, onPress }: any) => {
+  const themeColors = useThemeColors();
+  return (
+    <TouchableOpacity style={styles.trackItem} onPress={onPress}>
+      <Image source={{ uri: track.thumbnailUrl }} style={[styles.trackThumb, { borderColor: themeColors.pencil }]} />
+      <View style={styles.trackInfo}>
+        <PaperText numberOfLines={1} style={[styles.trackTitle, { color: themeColors.ink }]}>{track.title}</PaperText>
+        <PaperText numberOfLines={1} style={[styles.trackArtist, { color: themeColors.pencilLight }]}>{track.artist}</PaperText>
       </View>
+      <TouchableOpacity style={styles.moreBtn}>
+        <PaperText style={{ color: themeColors.pencilLight, fontSize: 24, lineHeight: 24 }}>···</PaperText>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+};
+
+const AlbumCard = ({ title, subtitle, imageUrl, onPress }: any) => {
+  const themeColors = useThemeColors();
+  return (
+    <TouchableOpacity style={styles.albumCard} onPress={onPress}>
+      <View style={[styles.albumArtWrap, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]}>
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.albumArt} />
+        ) : (
+          <MusicIcon size={40} color={themeColors.pencilLight} />
+        )}
+      </View>
+      <PaperText numberOfLines={1} style={[styles.albumTitle, { color: themeColors.ink }]}>{title}</PaperText>
+      <PaperText numberOfLines={1} style={[styles.albumSubtitle, { color: themeColors.pencilLight }]}>{subtitle}</PaperText>
     </TouchableOpacity>
   );
 };
@@ -58,7 +102,8 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [activeFilter, setActiveFilter] = useState('All');
+
   // Data State
   const [historySongs, setHistorySongs] = useState<Track[]>([]);
   const [likedSongs, setLikedSongs] = useState<Track[]>([]);
@@ -96,7 +141,7 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     try {
       navigation.navigate('Search', { initialQuery: searchQuery });
     } catch (error) {
@@ -114,155 +159,115 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity 
-              style={[styles.menuToggle, { borderColor: themeColors.pencil, backgroundColor: themeColors.paper }]} 
+            <TouchableOpacity
               onPress={() => setIsSidebarOpen(true)}
+              style={[styles.profileBtn, { borderColor: themeColors.pencil }]}
             >
-              <MenuIcon size={24} color={themeColors.ink} />
-            </TouchableOpacity>
-            <View style={[styles.searchBar, { borderColor: themeColors.pencil, backgroundColor: themeColors.pencil + '10' }]}>
-              <Search size={18} color={themeColors.pencilLight} />
-              <TextInput
-                style={[styles.searchInput, { color: themeColors.ink }]}
-                placeholder="Search music..."
-                placeholderTextColor={themeColors.pencilLight}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearch}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={clearSearch}>
-                  <X size={18} color={themeColors.pencilLight} />
-                </TouchableOpacity>
+              {user?.photoURL ? (
+                <Image source={{ uri: user.photoURL }} style={styles.profileImg} />
+              ) : (
+                <View style={[styles.profileImg, { backgroundColor: themeColors.pencil + '20', alignItems: 'center', justifyContent: 'center' }]}>
+                  <PaperText style={{ color: themeColors.pencil, fontSize: 18 }}>{user?.displayName?.[0] || 'U'}</PaperText>
+                </View>
               )}
+            </TouchableOpacity>
+
+            <View style={styles.filterContainer}>
+              {['All', 'Music', 'Podcasts'].map(filter => (
+                <FilterChip
+                  key={filter}
+                  label={filter}
+                  isActive={activeFilter === filter}
+                  onPress={() => setActiveFilter(filter)}
+                />
+              ))}
             </View>
           </View>
 
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={[styles.iconBtn, { borderColor: themeColors.pencil }]}>
-              <Bell size={20} color={themeColors.ink} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[styles.headerIconBtn, { borderColor: themeColors.pencil }]}>
+            <Bell size={22} color={themeColors.ink} />
+          </TouchableOpacity>
         </View>
 
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
+        <ScrollView
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh} 
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
               tintColor={themeColors.pencil}
               colors={[themeColors.pencil]}
             />
           }
         >
           <PaperText style={[styles.greeting, { color: themeColors.ink }]}>Good morning, {user?.displayName?.split(' ')[0] || 'Creator'}</PaperText>
-          
-          {/* Playlists Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Your Playlists</PaperText>
-              <TouchableOpacity onPress={() => navigation.navigate('Playlists')}><PaperText style={[styles.seeAll, { color: themeColors.blue }]}>See All</PaperText></TouchableOpacity>
-            </View>
-            
-            {isLoadingData ? (
-              <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
-            ) : playlists.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 15, paddingHorizontal: 5 }}>
-                {playlists.map((playlist, index) => (
-                  <View key={playlist.id} style={{ width: 110 }}>
-                    <DashboardCard 
-                      title={playlist.name} 
-                      subtitle="Custom Playlist" 
-                      imageUrl={playlist.coverUrl}
-                      cardWidth="100%"
-                      color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
-                      rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
-                      onPress={() => navigation.navigate('PlaylistDetail', { playlist })}
-                    />
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
-                <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>No playlists yet. Create one!</PaperText>
-              </View>
-            )}
+
+          {/* Quick Play Grid (Liked & Recent) */}
+          <View style={styles.quickGrid}>
+            <QuickPlayCard
+              title="Liked Songs"
+              imageUrl={likedSongs[0]?.thumbnailUrl}
+              onPress={() => navigation.navigate('Likes')}
+            />
+            {historySongs.slice(0, 5).map((track) => (
+              <QuickPlayCard
+                key={track.id}
+                title={track.title}
+                imageUrl={track.thumbnailUrl}
+                onPress={() => {
+                  const { playQueue } = useMusicStore.getState();
+                  playQueue([track], 0);
+                  navigation.navigate('Player', { track });
+                }}
+              />
+            ))}
           </View>
 
-          {/* Liked Songs Section */}
+          {/* Recent Rotation Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Liked Songs</PaperText>
-              <TouchableOpacity onPress={() => navigation.navigate('Likes')}><PaperText style={[styles.seeAll, { color: themeColors.blue }]}>See All</PaperText></TouchableOpacity>
-            </View>
-            
-            <View style={styles.grid}>
+            <PaperText style={[styles.sectionTitle, { color: themeColors.ink }]}>Your recent rotation</PaperText>
+            <View style={styles.listContainer}>
               {isLoadingData ? (
-                <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
-              ) : likedSongs.length > 0 ? (
-                likedSongs.slice(0, 4).map((track, index, array) => (
-                  <DashboardCard 
-                    key={track.id}
-                    title={track.title} 
-                    subtitle={track.artist} 
-                    imageUrl={track.thumbnailUrl}
-                    color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
-                    rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
-                    onPress={() => {
-                      const { playQueue } = useMusicStore.getState();
-                      playQueue(array, index);
-                      navigation.navigate('Player', { track });
-                    }}
-                  />
-                ))
-              ) : (
-                <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
-                  <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>Heart some songs to see them here.</PaperText>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* History Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <PaperText style={[styles.sectionTitle, { color: themeColors.pencil }]}>Recently Sketched</PaperText>
-              <TouchableOpacity onPress={async () => {
-                await historyService.clearHistory();
-                setHistorySongs([]);
-              }}>
-                <PaperText style={[styles.seeAll, { color: themeColors.pencilLight }]}>Clear</PaperText>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.grid}>
-              {isLoadingData ? (
-                <ActivityIndicator color={themeColors.pencil} size="large" style={{ marginTop: 20 }} />
+                <ActivityIndicator color={themeColors.pencil} style={{ marginTop: 10 }} />
               ) : historySongs.length > 0 ? (
-                historySongs.map((track, index, array) => (
-                  <DashboardCard 
-                    key={track.id}
-                    title={track.title} 
-                    subtitle={track.artist} 
-                    imageUrl={track.thumbnailUrl}
-                    color={isDarkMode ? (index % 2 === 0 ? '#2A2A2A' : '#242A2E') : (index % 2 === 0 ? '#FFF5E1' : '#E1F5FF')} 
-                    rotation={index % 2 === 0 ? "-1.5deg" : "1.5deg"}
+                historySongs.map((track, index) => (
+                  <TrackListItem
+                    key={track.id + index}
+                    track={track}
                     onPress={() => {
                       const { playQueue } = useMusicStore.getState();
-                      playQueue(array, index);
+                      playQueue(historySongs, index);
                       navigation.navigate('Player', { track });
                     }}
                   />
                 ))
               ) : (
-                <View style={[styles.emptyContainer, { borderColor: themeColors.pencil + '40' }]}>
-                  <PaperText style={[styles.emptyText, { color: themeColors.pencilLight }]}>No history yet. Start listening!</PaperText>
-                </View>
+                <PaperText style={[styles.emptyHint, { color: themeColors.pencilLight }]}>No recent tracks yet.</PaperText>
               )}
             </View>
+          </View>
+
+          {/* Albums/Playlists Horizontal Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <PaperText style={[styles.sectionTitle, { color: themeColors.ink }]}>Albums for you</PaperText>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalGap}>
+              {playlists.map((playlist) => (
+                <AlbumCard
+                  key={playlist.id}
+                  title={playlist.name}
+                  subtitle="Playlist"
+                  imageUrl={playlist.coverUrl}
+                  onPress={() => navigation.navigate('PlaylistDetail', { playlist })}
+                />
+              ))}
+              {/* Fake Recommendations */}
+              <AlbumCard title="Daily Mix 1" subtitle="Made for You" onPress={() => { }} />
+              <AlbumCard title="Discovery Weekly" subtitle="New Music" onPress={() => { }} />
+            </ScrollView>
           </View>
 
           <View style={[styles.quoteBox, { borderColor: themeColors.pencil, backgroundColor: themeColors.pencil + '05' }]}>
@@ -275,17 +280,18 @@ export const DashboardScreen: React.FC<any> = ({ navigation }) => {
         </ScrollView>
       </SafeAreaView>
 
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        activeRoute="Dashboard" 
+      <Sidebar
+        isOpen={isSidebarOpen}
+        activeRoute="Dashboard"
         onNavigate={(route) => {
           if (route !== 'Dashboard') navigation.navigate(route);
           setIsSidebarOpen(false);
-        }} 
+        }}
         onClose={() => setIsSidebarOpen(false)}
       />
 
       <MiniPlayer />
+      <Bottombar />
     </View>
   );
 };
@@ -296,87 +302,96 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: 15,
+  },
+  miniPlayerAboveTab: {
+    bottom: 80,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
   },
   headerLeft: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 15,
   },
-  menuToggle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  profileBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1.5,
-  },
-  searchBar: {
-    flex: 1,
-    height: 40,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-  },
-  searchText: {
-    fontSize: 16,
-    flex: 1,
-    fontFamily: 'PatrickHand_400Regular',
-  },
-  searchInput: {
-    flex: 1,
-    height: '100%',
-    marginLeft: 10,
-    fontFamily: 'PatrickHand_400Regular',
-    fontSize: 18,
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginLeft: 10,
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  avatarWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
     overflow: 'hidden',
-    backgroundColor: '#fff',
   },
-  avatar: {
+  profileImg: {
     width: '100%',
     height: '100%',
   },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scrollContent: {
+    paddingHorizontal: 15,
     paddingBottom: 120,
   },
   greeting: {
     fontSize: 28,
-    marginBottom: 20,
+    marginBottom: 10,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginVertical: 15,
+    gap: 10,
+  },
+  quickCard: {
+    width: '48.5%',
+    height: 56,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  quickCardImageWrap: {
+    width: 56,
+    height: 56,
+    borderRightWidth: 1.5,
+    borderColor: 'inherit',
+  },
+  quickCardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  quickCardTitle: {
+    flex: 1,
+    paddingHorizontal: 8,
+    fontSize: 13,
     fontFamily: 'PatrickHand_400Regular',
   },
   section: {
-    marginBottom: 30,
+    marginVertical: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -385,98 +400,67 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'PatrickHand_400Regular',
+    marginBottom: 15,
   },
-  seeAll: {
-    fontSize: 14,
-    textDecorationLine: 'underline',
+  listContainer: {
+    gap: 12,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 15,
-    paddingBottom: 10,
-    paddingHorizontal: 5,
-    justifyContent: 'center',
-  },
-  dashCard: {
-    width: '31%',
-    padding: 8,
-    borderWidth: 2,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 0,
-    elevation: 3,
-  },
-  dashCardImagePlaceholder: {
-    aspectRatio: 1,
-    borderRadius: 6,
-    marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-  },
-  cardTextContent: {
-    width: '100%',
-  },
-  dashCardTitle: {
-    fontSize: 13,
-    marginBottom: 0,
-    fontFamily: 'PatrickHand_400Regular',
-  },
-  dashCardSubtitle: {
-    fontSize: 10,
-  },
-  horizontalScroll: {
-  },
-  horizontalScrollContent: {
-    paddingBottom: 40,
-    paddingHorizontal: 5,
-  },
-  playlistCard: {
-    width: 100,
-    marginRight: 15,
-    alignItems: 'center',
-  },
-  playlistArt: {
-    width: 100,
-    height: 100,
-    borderWidth: 2,
-    borderRadius: 10,
-    marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '1deg' }],
-  },
-  playlistArtText: {
-    fontSize: 36,
-    opacity: 0.5,
-  },
-  playlistName: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 8,
-    minHeight: 24,
-  },
-  createBtn: {
+  trackItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    gap: 12,
+  },
+  trackThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 4,
     borderWidth: 1.5,
-    borderRadius: 12,
-    borderStyle: 'dashed',
   },
-  createBtnText: {
-    fontSize: 14,
+  trackInfo: {
+    flex: 1,
+  },
+  trackTitle: {
+    fontSize: 16,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  trackArtist: {
+    fontSize: 13,
+  },
+  moreBtn: {
+    padding: 8,
+  },
+  horizontalGap: {
+    gap: 15,
+    paddingRight: 15,
+  },
+  albumCard: {
+    width: 140,
+  },
+  albumArtWrap: {
+    width: 140,
+    height: 140,
+    borderWidth: 2,
+    borderRadius: 12,
+    marginBottom: 8,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  albumArt: {
+    width: '100%',
+    height: '100%',
+  },
+  albumTitle: {
+    fontSize: 15,
+    fontFamily: 'PatrickHand_400Regular',
+  },
+  albumSubtitle: {
+    fontSize: 12,
   },
   quoteBox: {
-    marginTop: 10,
+    marginTop: 20,
     padding: 20,
     borderWidth: 2,
     borderStyle: 'dashed',
@@ -493,17 +477,10 @@ const styles = StyleSheet.create({
   quoteAuthor: {
     fontSize: 14,
   },
-  emptyContainer: {
-    padding: 20,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    alignItems: 'center',
-    marginVertical: 10,
-    marginHorizontal: 5,
-  },
-  emptyText: {
+  emptyHint: {
     fontSize: 16,
     fontFamily: 'PatrickHand_400Regular',
+    textAlign: 'center',
+    marginTop: 10,
   }
 });

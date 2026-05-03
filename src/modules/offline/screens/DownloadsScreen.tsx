@@ -2,11 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Download, Trash2, Play, WifiOff } from 'lucide-react-native';
-import { PaperText } from '../../../shared/components/PaperText';
+import { PaperText } from '../../../shared/components/ui/PaperText';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { offlineService, DownloadedTrack } from '../services/offline.service';
 import { useMusicStore } from '../../music/store/music.slice';
-import { MiniPlayer } from '../../../shared/components/MiniPlayer';
+import { MiniPlayer } from '../../../shared/components/player/MiniPlayer';
 
 export const DownloadsScreen: React.FC<any> = ({ navigation }) => {
   const colors = useThemeColors();
