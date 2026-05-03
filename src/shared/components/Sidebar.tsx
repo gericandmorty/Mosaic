@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 1500,
   },
   container: {
     position: 'absolute',
@@ -150,6 +151,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 25,
+    zIndex: 2000,
   },
   headerRow: {
     flexDirection: 'row',

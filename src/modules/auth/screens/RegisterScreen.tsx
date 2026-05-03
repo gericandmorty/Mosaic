@@ -12,13 +12,23 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const themeColors = useThemeColors();
   const { setAuth } = useAuthStore();
+  const { Eye, EyeOff } = require('lucide-react-native');
 
   const handleRegister = async () => {
-    if (!email || !password || !displayName) {
+    if (loading) return; // Prevent multiple clicks
+    
+    if (!email || !password || !confirmPassword || !displayName) {
       Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.');
       return;
     }
 
@@ -29,11 +39,25 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const data = await authService.register({ email, password, displayName });
-      setAuth(data, data.token);
-      // No need to navigate, AuthNavigator handles it automatically!
+      const registerPromise = authService.register({ email, password, displayName });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 15000)
+      );
+
+      const data = await Promise.race([registerPromise, timeoutPromise]) as any;
+      
+      Alert.alert(
+        'Account Created', 
+        'Please check your email for a 6-digit verification code to activate your sketchbook.',
+        [{ text: 'Verify Now', onPress: () => navigation.navigate('VerifyRegistration', { email }) }]
+      );
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Please check your details and try again.');
+      if (error.message === 'TIMEOUT') {
+        Alert.alert('Registration Timed Out', 'The server is taking too long to respond. Please try again later.');
+      } else {
+        console.error('Registration error:', error);
+        Alert.alert('Registration Failed', error.response?.data?.message || 'Please check your details and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -81,14 +105,40 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
 
             <View style={styles.inputGroup}>
               <PaperText style={[styles.label, { color: themeColors.pencil }]}>Password</PaperText>
-              <TextInput
-                style={[styles.input, { color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
-                placeholder="••••••••"
-                placeholderTextColor={themeColors.pencilLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={[styles.input, { flex: 1, color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                  placeholder="••••••••"
+                  placeholderTextColor={themeColors.pencilLight}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={themeColors.pencilLight} />
+                  ) : (
+                    <Eye size={20} color={themeColors.pencilLight} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <PaperText style={[styles.label, { color: themeColors.pencil }]}>Retype Password</PaperText>
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={[styles.input, { flex: 1, color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                  placeholder="••••••••"
+                  placeholderTextColor={themeColors.pencilLight}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showPassword}
+                />
+              </View>
             </View>
 
             <TouchableOpacity 
@@ -179,6 +229,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontFamily: 'PatrickHand_400Regular',
     fontSize: 18,
+  },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    height: '100%',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   registerBtn: {
     height: 55,

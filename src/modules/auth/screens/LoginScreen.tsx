@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../shared/hooks/useThemeColors';
 import { PaperText } from '../../../shared/components/PaperText';
@@ -11,19 +11,30 @@ const LOGO_IMG = require('../../../assets/logo/logo.png');
 export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const [email, setEmail] = useState('geric@gmail.com');
   const [password, setPassword] = useState('Password123!');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const themeColors = useThemeColors();
   const { setAuth } = useAuthStore();
+  const { Eye, EyeOff } = require('lucide-react-native');
 
   const handleLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
     try {
-      const response = await authService.login({ email, password });
+      const loginPromise = authService.login({ email, password });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 10000)
+      );
+
+      const response = await Promise.race([loginPromise, timeoutPromise]) as any;
       setAuth(response, response.token);
-      // No need to navigate, AuthNavigator handles it automatically!
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (error: any) {
+      if (error.message === 'TIMEOUT') {
+        Alert.alert('Login Timed Out', 'The server is taking too long to respond. Please try again later.');
+      } else {
+        console.error('Login error:', error);
+        Alert.alert('Login Failed', error.response?.data?.message || 'Invalid email or password.');
+      }
     } finally {
       setLoading(false);
     }
@@ -60,14 +71,32 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 
             <View style={styles.inputGroup}>
               <PaperText style={[styles.label, { color: themeColors.pencil }]}>Password</PaperText>
-              <TextInput
-                style={[styles.input, { color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
-                placeholder="••••••••"
-                placeholderTextColor={themeColors.pencilLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={[styles.input, { flex: 1, color: themeColors.ink, borderColor: themeColors.pencil + '40', backgroundColor: themeColors.background }]}
+                  placeholder="••••••••"
+                  placeholderTextColor={themeColors.pencilLight}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={themeColors.pencilLight} />
+                  ) : (
+                    <Eye size={20} color={themeColors.pencilLight} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('ForgotPassword')}
+                style={styles.forgotPasswordLink}
+              >
+                <PaperText style={[styles.forgotPasswordText, { color: themeColors.blue }]}>Forgot Password?</PaperText>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity 
@@ -156,6 +185,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontFamily: 'PatrickHand_400Regular',
     fontSize: 18,
+  },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   loginBtn: {
     height: 55,
