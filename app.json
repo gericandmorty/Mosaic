@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/images/mosaic-logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.gericandmorty.Mosaic"
     },
     "web": {
       "output": "static",

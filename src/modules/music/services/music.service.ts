@@ -1,4 +1,4 @@
-import { apiClient } from '../../../services/apiClient';
+import { apiClient, getBaseUrl } from '../../../services/apiClient';
 
 export interface Track {
   id: string;
@@ -23,7 +23,11 @@ export const musicService = {
   },
 
   getStreamUrl: async (id: string): Promise<string> => {
-    const response = await apiClient.get(`/music/stream/${id}`);
-    return response.data.url;
+    const baseUrl = getBaseUrl();
+    const streamUrl = `${baseUrl}/music/play/${id}`;
+    console.log('--- STREAMING DEBUG ---');
+    console.log('ID:', id);
+    console.log('Generated URL:', streamUrl);
+    return streamUrl;
   }
 };
