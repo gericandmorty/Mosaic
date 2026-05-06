@@ -9,7 +9,7 @@ import { useAuthStore } from '../store/auth.slice';
 const LOGO_IMG = require('../../../assets/logo/logo.png');
 
 export const LoginScreen: React.FC<any> = ({ navigation }) => {
-  const [email, setEmail] = useState('geric@gmail.com');
+  const [email, setEmail] = useState('gericmorit3211@gmail.com');
   const [password, setPassword] = useState('Password123!');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
     setLoading(true);
     try {
       const loginPromise = authService.login({ email, password });
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('TIMEOUT')), 10000)
       );
 
@@ -42,7 +42,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
@@ -80,7 +80,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
@@ -91,7 +91,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                   )}
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => navigation.navigate('ForgotPassword')}
                 style={styles.forgotPasswordLink}
               >
@@ -99,8 +99,8 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity 
-              style={[styles.loginBtn, { backgroundColor: themeColors.pencil }]} 
+            <TouchableOpacity
+              style={[styles.loginBtn, { backgroundColor: themeColors.pencil }]}
               onPress={handleLogin}
               disabled={loading}
             >

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   // Use the environment variable if it's explicitly set
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
